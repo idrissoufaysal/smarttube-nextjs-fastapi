@@ -1,0 +1,72 @@
+# ==========================================
+# Variables d'environnement & Secrets
+# ==========================================
+.env
+.env*.local
+.env.development
+.env.test
+.env.production
+!.env.example
+
+# ==========================================
+# Python / FastAPI (Back)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+env/
+venv/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==========================================
+# Node.js / Next.js (Front)
+# ==========================================
+node_modules/
+.next/
+out/
+.pnp
+.pnp.js
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Vercel
+.vercel/
+
+# ==========================================
+# Système & IDEs
+# ==========================================
+.DS_Store
+Thumbs.db
+*.pem
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
