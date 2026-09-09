@@ -1,0 +1,141 @@
+[
+    {
+        "input": {
+            "query": "Dans quel pays Louis vit-il actuellement et quel est le montant de son loyer mensuel ?"
+        },
+        "expected_output": "Louis vit actuellement en Géorgie et paie 20 000 laris par mois pour son loyer. [Source: 0:41]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "factuel",
+            "expected_sources": [
+                "0:41"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Pourquoi Louis a-t-il quitté Dubaï pour s'installer en Géorgie ?"
+        },
+        "expected_output": "Louis explique qu'il a quitté Dubaï parce qu'il trouve que cette ville est intéressante lorsqu'on est jeune et qu'on veut élargir son état d'esprit et découvrir une grande ville, mais qu'elle ne permet pas forcément de vivre une vie aussi paisible et complète. Il s'est ensuite installé en Géorgie après avoir rencontré une fille qui l'y a emmené, puis être tombé amoureux à la fois d'elle et du pays. [Source: 1:22] [Source: 1:38] [Source: 0:56]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "synthese",
+            "expected_sources": [
+                "1:22",
+                "1:38",
+                "0:56"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Que se passe-t-il vers 3:08 dans la vidéo ?"
+        },
+        "expected_output": "Louis recommande le livre « Made in America » de Sam Walton et explique que Sam Walton est le fondateur de Walmart. Il considère ce livre comme exceptionnel parce qu'il montre comment une personne relativement normale peut réussir en faisant des choses simples et logiques à grande échelle. [Source: 3:08]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "temporel",
+            "expected_sources": [
+                "3:08"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Quelles sont, selon Louis, les deux meilleures écoles de la vie ?"
+        },
+        "expected_output": "Selon Louis, les deux meilleures écoles de la vie sont les livres et YouTube. Il considère les livres comme une manière d'apprendre directement auprès de personnes qui ont accompli des choses exceptionnelles, et YouTube comme une université gratuite permettant d'apprendre énormément de choses. [Source: 4:16] [Source: 4:36]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "factuel",
+            "expected_sources": [
+                "4:16",
+                "4:36"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Pourquoi Louis dit-il que la routine est importante lorsqu'on se lance dans l'entrepreneuriat, et quelle routine matinale décrit-il ?"
+        },
+        "expected_output": "Louis explique que l'entrepreneuriat peut avoir une vie très chaotique et qu'il est donc important d'avoir une routine pour rester discipliné, se lever tôt, rester en bonne santé et faire du sport. Dans sa propre routine, il se lève entre 6h30 et 7h, puis passe environ une demi-heure à méditer ou à rester assis dans le calme sans téléphone, iPad ni ordinateur. [Source: 10:42] [Source: 11:30]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "synthese",
+            "expected_sources": [
+                "10:42",
+                "11:30"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Que se passe-t-il vers 19:32 dans la vidéo ?"
+        },
+        "expected_output": "Louis explique qu'il a rencontré plusieurs milliardaires et raconte notamment avoir passé une semaine avec un milliardaire russe, père d'un de ses amis rencontré à Londres. Il précise que cette semaine s'est déroulée dans un cadre extrêmement luxueux et aurait probablement coûté plusieurs millions. [Source: 19:32] [Source: 19:41] [Source: 19:55]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "temporel",
+            "expected_sources": [
+                "19:32",
+                "19:41",
+                "19:55"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Quelle est la vision de Louis sur le bonheur et quels éléments considère-t-il comme essentiels pour être heureux ?"
+        },
+        "expected_output": "Pour Louis, le bonheur ne dépend pas principalement de l'argent ou des biens matériels. Il considère que le bonheur vient surtout des relations avec les autres, notamment des amis, de la relation avec sa compagne ou sa femme, ainsi que de la santé et du contrôle de son esprit. Il estime également qu'il faut avoir un sentiment de croissance personnelle et un sentiment d'utilité dans la société. [Source: 20:56] [Source: 21:21] [Source: 22:12] [Source: 22:32]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "synthese",
+            "expected_sources": [
+                "20:56",
+                "21:21",
+                "22:12",
+                "22:32"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Selon Louis, pourquoi l'argent peut-il être utile même s'il ne rend pas directement heureux ?"
+        },
+        "expected_output": "Louis estime que l'argent apporte surtout une liberté permettant de sortir d'une situation dans laquelle on ne veut pas rester. Il donne plusieurs exemples : pouvoir quitter une maison malsaine, partir d'une ville ou d'un pays que l'on n'aime pas, ou encore pouvoir satisfaire ses besoins essentiels. Pour lui, l'argent est donc avant tout un moyen d'obtenir davantage de liberté. [Source: 23:29] [Source: 24:15]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "synthese",
+            "expected_sources": [
+                "23:29",
+                "24:15"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Que se passe-t-il vers 33:24 dans la vidéo ?"
+        },
+        "expected_output": "Louis explique que réussir est à la fois plus simple et plus difficile qu'on ne le pense. Le business lui paraît simple parce que ses règles sont logiques, mais difficile parce qu'il demande du travail, de la discipline, des prises de risque et parfois de nombreuses nuits difficiles. [Source: 33:16] [Source: 33:24]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "temporel",
+            "expected_sources": [
+                "33:16",
+                "33:24"
+            ]
+        }
+    },
+    {
+        "input": {
+            "query": "Que dit Louis sur les cryptomonnaies et leur rôle dans la réussite entrepreneuriale ?"
+        },
+        "expected_output": "La vidéo ne parle pas des cryptomonnaies ni de leur rôle dans la réussite entrepreneuriale. [Source: 0:02]",
+        "metadata": {
+            "video_id": "5lZhUc6MW8w",
+            "category": "hors_sujet",
+            "expected_sources": []
+        }
+    }
+]

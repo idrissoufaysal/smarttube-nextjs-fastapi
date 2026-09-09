@@ -6,7 +6,12 @@ from langchain_openai import ChatOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config.settings import settings
 from app.db.models import ChatMessage
-from app.services.langfuse_client import get_langfuse_callback, langfuse_trace_context
+from app.services.langfuse_client import (
+    get_langfuse_callback,
+    get_langfuse_client,
+    langfuse_trace_context,
+)
+from app.services.vectorstore import similarity_search_rag
 
 
 def get_llm(streaming: bool = True) -> ChatOpenAI:
@@ -25,23 +30,93 @@ def get_llm(streaming: bool = True) -> ChatOpenAI:
                 "X-Title": "SmartTube AI",
             },
         )
-  
+    return ChatOpenAI(
+        model=settings.OPENAI_MODEL if hasattr(settings, "OPENAI_MODEL") else "gpt-4o-mini",
+        api_key=settings.OPENAI_API_KEY,
+        streaming=streaming,
+        temperature=0.3,
+    )
 
 
 async def generate_rag_response_stream(
     messages: list[dict],
-    context: str,
-    using_rag: bool,
     video_id: str | None,
     user_id: str | None,
+    raw_transcript: str | None,
     db: AsyncSession,
 ) -> AsyncGenerator[str, None]:
     """
     Génère la réponse RAG en streaming au format Vercel AI SDK Data Stream Protocol (`0:"..."\n`)
     pour une compatibilité 100% transparente avec `useChat` du frontend Next.js.
+    
+    Englobe le cycle complet (Retrieval Pinecone + Génération LLM) dans une trace Langfuse unifiée.
     """
-    system_content = (
-        f"""Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube.
+    # 1. Extraction de la dernière requête utilisateur
+    last_user_query = ""
+    for m in reversed(messages):
+        if m.get("role") == "user":
+            if "parts" in m and isinstance(m["parts"], list):
+                last_user_query = " ".join(
+                    p.get("text", "") for p in m["parts"] if p.get("type") == "text"
+                )
+            elif isinstance(m.get("content"), str):
+                last_user_query = m["content"]
+            break
+
+    # 2. Trace englobante unifiée Langfuse (Retrieval + LLM Generation)
+    with langfuse_trace_context(
+        session_id=video_id,
+        user_id=user_id,
+        trace_name="chat-rag",
+        tags=["chat", "rag" if video_id else "fallback", "streaming"],
+        metadata={
+            "video_id": video_id,
+            "user_id": user_id,
+            "messages_count": len(messages),
+        },
+    ):
+        # Recherche vectorielle sous le span 'pinecone-retrieval'
+        context = ""
+        using_rag = False
+        if video_id and last_user_query:
+            context = await similarity_search_rag(video_id, last_user_query, k=5)
+
+            # Si le RAG est vide mais qu'on a un videoId, vérifier si la vidéo est en DB et indexer à la volée
+            if not context:
+                from sqlalchemy import select
+                from app.db.models import Segment
+                from app.services.vectorstore import index_transcript_segments
+
+                seg_stmt = (
+                    select(Segment)
+                    .where(Segment.videoId == video_id)
+                    .order_by(Segment.start.asc())
+                )
+                seg_result = await db.execute(seg_stmt)
+                db_segments = seg_result.scalars().all()
+
+                if db_segments:
+                    print(f"[Chat RAG] Vidéo '{video_id}' non indexée dans Pinecone. Auto-indexation de {len(db_segments)} segments...")
+                    segments_payload = [
+                        {"text": s.text, "start": s.start, "duration": s.duration}
+                        for s in db_segments
+                    ]
+                    await index_transcript_segments(video_id, segments_payload)
+                    context = await similarity_search_rag(video_id, last_user_query, k=5)
+
+            if context:
+                using_rag = True
+
+        # Repli sur la transcription brute si Pinecone ne retourne rien
+        if not context and raw_transcript:
+            MAX_FALLBACK_CHARS = 8000
+            if len(raw_transcript) > MAX_FALLBACK_CHARS:
+                context = raw_transcript[:MAX_FALLBACK_CHARS] + "\n\n...[Transcription tronquée pour optimiser la consommation de tokens]..."
+            else:
+                context = raw_transcript
+
+        system_content = (
+            f"""Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube.
 Ton rôle est d'aider l'utilisateur à comprendre la vidéo en te basant sur {"les extraits pertinents suivants de sa transcription avec leurs timelines" if using_rag else "sa transcription complète"} :
 
 <contexte_video>
@@ -52,71 +127,55 @@ Instructions impératives pour tes réponses :
 1. Réponds de manière claire, concise et pédagogique en te basant sur ce contexte.
 2. Réponds obligatoirement en français.
 3. Pour chaque fait ou concept important que tu décris, tu dois citer sa timeline exacte sous le format précis : [Source: mm:ss] (ou [Source: hh:mm:ss] si la vidéo est longue). Base-toi strictement sur les annotations [Timeline: mm:ss] présentes dans le contexte. N'invente jamais de timeline !"""
-        if context
-        else "Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube. Tes réponses doivent IMPÉRATIVEMENT être en français."
-    )
+            if context
+            else "Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube. Tes réponses doivent IMPÉRATIVEMENT être en français."
+        )
 
-    # Conversion des messages en format LangChain
-    langchain_messages = [SystemMessage(content=system_content)]
-    last_user_query = ""
+        # Conversion des messages en format LangChain
+        langchain_messages = [SystemMessage(content=system_content)]
+        for m in messages:
+            role = m.get("role")
+            content = ""
+            if "parts" in m and isinstance(m["parts"], list):
+                content = " ".join(
+                    p.get("text", "") for p in m["parts"] if p.get("type") == "text"
+                )
+            elif isinstance(m.get("content"), str):
+                content = m["content"]
 
-    for m in messages:
-        role = m.get("role")
-        content = ""
-        if "parts" in m and isinstance(m["parts"], list):
-            content = " ".join(
-                p.get("text", "") for p in m["parts"] if p.get("type") == "text"
-            )
-        elif isinstance(m.get("content"), str):
-            content = m["content"]
+            if role == "user":
+                langchain_messages.append(HumanMessage(content=content))
+            elif role == "assistant":
+                langchain_messages.append(AIMessage(content=content))
 
-        if role == "user":
-            last_user_query = content
-            langchain_messages.append(HumanMessage(content=content))
-        elif role == "assistant":
-            langchain_messages.append(AIMessage(content=content))
+        # Sauvegarde préalable du message utilisateur en DB
+        if video_id and last_user_query:
+            try:
+                user_msg = ChatMessage(
+                    videoId=video_id,
+                    userId=user_id,
+                    role="user",
+                    content=last_user_query,
+                )
+                db.add(user_msg)
+                await db.commit()
+            except Exception as e:
+                print(f"[Chat DB] Erreur sauvegarde message user: {e}")
 
-    # Sauvegarde préalable du message utilisateur en DB
-    if video_id and last_user_query:
-        try:
-            user_msg = ChatMessage(
-                videoId=video_id,
-                userId=user_id,
-                role="user",
-                content=last_user_query,
-            )
-            db.add(user_msg)
-            await db.commit()
-        except Exception as e:
-            print(f"[Chat DB] Erreur sauvegarde message user: {e}")
+        llm = get_llm(streaming=True)
+        accumulated_response: list[str] = []
+        msg_id = f"msg-{uuid.uuid4().hex[:16]}"
 
-    llm = get_llm(streaming=True)
-    accumulated_response: list[str] = []
-    msg_id = f"msg-{uuid.uuid4().hex[:16]}"
-
-    # Contexte et callback Langfuse pour tracer la génération
-    with langfuse_trace_context(
-        session_id=video_id,
-        user_id=user_id,
-        trace_name="chat-rag",
-        tags=["chat", "rag" if using_rag else "fallback", "streaming"],
-        metadata={
-            "video_id": video_id,
-            "using_rag": using_rag,
-            "context_length": len(context) if context else 0,
-            "messages_count": len(messages),
-        },
-    ):
         langfuse_cb = get_langfuse_callback()
         stream_config = {"callbacks": [langfuse_cb]} if langfuse_cb else None
 
-        # 1. Événements d'initialisation du stream UI (SSE)
+        # Événements d'initialisation du stream UI (SSE)
         yield 'data: {"type":"start"}\n\n'
         yield 'data: {"type":"start-step"}\n\n'
         yield f'data: {{"type":"text-start","id":{json.dumps(msg_id)}}}\n\n'
 
         try:
-            # 2. Streamer les deltas de texte au format SSE UI Message Stream
+            # Streamer les deltas de texte au format SSE UI Message Stream
             async for chunk in llm.astream(langchain_messages, config=stream_config):
                 text_chunk = ""
                 if isinstance(chunk.content, str):
@@ -151,24 +210,28 @@ Instructions impératives pour tes réponses :
             yield f"data: {delta_payload}\n\n"
 
         finally:
-            # 3. Finalisation du stream SSE
+            # Finalisation du stream SSE
             yield f'data: {{"type":"text-end","id":{json.dumps(msg_id)}}}\n\n'
             yield 'data: {"type":"finish-step"}\n\n'
             yield 'data: {"type":"finish","finishReason":"stop"}\n\n'
             yield 'data: [DONE]\n\n'
 
-    full_assistant_text = "".join(accumulated_response)
+        full_assistant_text = "".join(accumulated_response)
 
-    # Sauvegarde du message assistant complet en DB
-    if video_id and full_assistant_text:
-        try:
-            assistant_msg = ChatMessage(
-                videoId=video_id,
-                userId=user_id,
-                role="assistant",
-                content=full_assistant_text,
-            )
-            db.add(assistant_msg)
-            await db.commit()
-        except Exception as e:
-            print(f"[Chat DB] Erreur sauvegarde message assistant: {e}")
+        # Sauvegarde du message assistant complet en DB
+        if video_id and full_assistant_text:
+            try:
+                assistant_msg = ChatMessage(
+                    videoId=video_id,
+                    userId=user_id,
+                    role="assistant",
+                    content=full_assistant_text,
+                )
+                db.add(assistant_msg)
+                await db.commit()
+            except Exception as e:
+                print(f"[Chat DB] Erreur sauvegarde message assistant: {e}")
+
+        # Vider les événements en attente vers Langfuse
+        from app.services.langfuse_client import flush_langfuse
+        flush_langfuse()

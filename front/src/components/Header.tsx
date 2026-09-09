@@ -21,7 +21,7 @@ export function Header() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 md:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Logo" width={200} height={250} />
+            <Image src="/logo.png" alt="Logo" width={200} height={250} className='w-auto h-auto' />
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-white/50 md:flex">
             <Link href="/" className="transition-colors duration-200 hover:text-white/90">Home</Link>

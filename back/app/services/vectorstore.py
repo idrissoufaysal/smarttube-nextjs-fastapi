@@ -4,6 +4,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone
+from langfuse import observe
 
 from app.config.settings import settings
 
@@ -162,6 +163,7 @@ async def index_transcript_segments(video_id: str, segments: list[dict]) -> int:
                 _indexing_events.pop(video_id, None)
 
 
+@observe(name="pinecone-retrieval", as_type="retriever")
 async def similarity_search_rag(video_id: str, query: str, k: int = 5) -> str:
     """
     Effectue une recherche par similarité dans le namespace de la vidéo

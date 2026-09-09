@@ -201,3 +201,9 @@ Ajoutez ces variables dans l'onglet **Environment Variables** :
 ## 🔒 Sécurité & Git
 
 Les fichiers `.env` contenant vos clés secrètes ne doivent **jamais** être poussés sur GitHub. Le fichier `.gitignore` à la racine protège automatiquement vos identifiants. Utilisez toujours `.env.example` pour documenter les variables requises.
+
+
+Rate limit exceeded: free-models-per-day. 
+(nvidia/llama-nemotron-embed-vl-1b-v2:free - quota de 50 requêtes/jour atteint sur le tier gratuit)
+
+limite de 16 requete par jour pour le models

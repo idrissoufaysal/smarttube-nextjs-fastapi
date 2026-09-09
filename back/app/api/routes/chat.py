@@ -6,11 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_current_user_optional
-from app.db.models import ChatMessage, Segment, User
+from app.db.models import ChatMessage, User
 from app.db.session import get_db
 from app.schemas.chat import ChatMessageResponse, ChatRequest
 from app.services.rag import generate_rag_response_stream
-from app.services.vectorstore import index_transcript_segments, similarity_search_rag
 
 router = APIRouter(tags=["Chat"])
 
@@ -24,10 +23,7 @@ async def chat_rag_endpoint(
     current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    context = ""
-    using_rag = False
-
-    # Extraire la dernière requête de l'utilisateur
+    # Extraire la dernière requête de l'utilisateur pour vérifier les guardrails
     last_user_query = ""
     for m in reversed(body.messages):
         if m.get("role") == "user":
@@ -73,52 +69,15 @@ async def chat_rag_endpoint(
             },
         )
 
-    # Recherche vectorielle RAG dans Pinecone
-    if body.videoId and last_user_query:
-        rag_context = await similarity_search_rag(body.videoId, last_user_query, k=5)
-
-        # Si le RAG est vide mais qu'on a un videoId, vérifier si la vidéo est en DB et indexer à la volée
-        if not rag_context:
-            seg_stmt = (
-                select(Segment)
-                .where(Segment.videoId == body.videoId)
-                .order_by(Segment.start.asc())
-            )
-            seg_result = await db.execute(seg_stmt)
-            db_segments = seg_result.scalars().all()
-
-            if db_segments:
-                print(f"[Chat RAG] Vidéo '{body.videoId}' non indexée dans Pinecone. Auto-indexation de {len(db_segments)} segments...")
-                segments_payload = [
-                    {"text": s.text, "start": s.start, "duration": s.duration}
-                    for s in db_segments
-                ]
-                await index_transcript_segments(body.videoId, segments_payload)
-                # Seconde recherche immédiate
-                rag_context = await similarity_search_rag(body.videoId, last_user_query, k=5)
-
-        if rag_context:
-            context = rag_context
-            using_rag = True
-
-    # Repli sur la transcription brute si RAG non concluant (avec garde-fou de taille)
-    if not context and body.transcript:
-        MAX_FALLBACK_CHARS = 8000  # ~1500-2000 tokens max de secours
-        if len(body.transcript) > MAX_FALLBACK_CHARS:
-            context = body.transcript[:MAX_FALLBACK_CHARS] + "\n\n...[Transcription tronquée pour optimiser la consommation de tokens]..."
-        else:
-            context = body.transcript
-
     user_id = current_user.id if current_user else None
 
-    # Retourner le flux compatible Vercel AI SDK UI Message Stream Protocol
+    # Retourner le flux : le cycle complet Retrieval + Génération s'exécute sous la trace Langfuse unifiée
     return StreamingResponse(
         generate_rag_response_stream(
             messages=body.messages,
-            context=context,
-            using_rag=using_rag,
             video_id=body.videoId,
             user_id=user_id,
+            raw_transcript=body.transcript,
             db=db,
         ),
         media_type="text/event-stream; charset=utf-8",

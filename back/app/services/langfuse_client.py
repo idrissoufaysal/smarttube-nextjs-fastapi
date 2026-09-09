@@ -183,7 +183,10 @@ def score_trace(
         if metadata:
             score_kwargs["metadata"] = metadata
 
-        client.score(**score_kwargs)
+        if hasattr(client, "create_score"):
+            client.create_score(**score_kwargs)
+        elif hasattr(client, "score"):
+            client.score(**score_kwargs)
         logger.info("[Langfuse] Score '%s' (%s) enregistré pour session='%s'", name, value, session_id)
     except Exception as exc:
         logger.warning("[Langfuse] Erreur lors de l'enregistrement du score : %s", exc)
