@@ -36,23 +36,33 @@ async def wait_for_indexing_if_active(video_id: str, timeout: float = 8.0) -> bo
 def get_embeddings() -> OpenAIEmbeddings:
     """
     Initialise les embeddings compatibles avec OpenRouter ou OpenAI direct.
+    Si text-embedding-3 est utilisé, projette en dimension 2048 pour matcher l'index Pinecone.
     """
+    is_v3 = "text-embedding-3" in settings.EMBEDDING_MODEL.lower()
+    dimensions = 2048 if is_v3 else None
+
     if settings.AI_KEY:
-        return OpenAIEmbeddings(
-            model=settings.EMBEDDING_MODEL,
-            openai_api_key=settings.AI_KEY,
-            openai_api_base="https://openrouter.ai/api/v1",
-            check_embedding_ctx_length=False,
-            model_kwargs={"extra_body": {"encoding_format": "float"}},
-            default_headers={
+        kwargs = {
+            "model": settings.EMBEDDING_MODEL,
+            "openai_api_key": settings.AI_KEY,
+            "openai_api_base": "https://openrouter.ai/api/v1",
+            "check_embedding_ctx_length": False,
+            "default_headers": {
                 "HTTP-Referer": "https://smarttube.example.com",
                 "X-Title": "SmartTube AI",
             },
-        )
-    return OpenAIEmbeddings(
-        model=settings.EMBEDDING_MODEL,
-        openai_api_key=settings.OPENAI_API_KEY,
-    )
+        }
+        if dimensions:
+            kwargs["dimensions"] = dimensions
+        return OpenAIEmbeddings(**kwargs)
+
+    kwargs = {
+        "model": settings.EMBEDDING_MODEL,
+        "openai_api_key": settings.OPENAI_API_KEY,
+    }
+    if dimensions:
+        kwargs["dimensions"] = dimensions
+    return OpenAIEmbeddings(**kwargs)
 
 
 def get_pinecone_client() -> Pinecone:
@@ -73,6 +83,7 @@ def get_vector_store(video_id: str) -> PineconeVectorStore:
     )
 
 
+@observe(name="index-transcript-segments")
 async def index_transcript_segments(video_id: str, segments: list[dict]) -> int:
     """
     Regroupe les segments en blocs sémantiques de ~1000 caractères avec timestamps,
@@ -129,31 +140,6 @@ async def index_transcript_segments(video_id: str, segments: list[dict]) -> int:
             # add_documents synchronise vers Pinecone
             vector_store.add_documents(splits)
             print(f"[Pinecone] {len(splits)} chunks indexés dans le namespace '{video_id}'")
-
-            # Tracer l'indexation dans Langfuse
-            try:
-                from app.services.langfuse_client import get_langfuse_client, flush_langfuse
-                lf = get_langfuse_client()
-                if lf:
-                    trace = lf.trace(
-                        name="index-transcript-segments",
-                        session_id=video_id,
-                        tags=["indexing", "pinecone", "embeddings"],
-                        metadata={
-                            "video_id": video_id,
-                            "chunk_count": len(splits),
-                            "segment_count": len(segments),
-                            "chunk_size": 1000,
-                            "chunk_overlap": 200,
-                        },
-                    )
-                    trace.span(
-                        name="pinecone-upsert",
-                        metadata={"chunks": len(splits)},
-                    )
-                    flush_langfuse()
-            except Exception as lf_err:
-                print(f"[Langfuse Indexing] Notice: {lf_err}")
 
         return len(splits) if splits else 0
     finally:

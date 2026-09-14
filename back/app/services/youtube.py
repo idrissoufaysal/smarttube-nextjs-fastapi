@@ -61,31 +61,35 @@ async def fetch_youtube_transcript(video_id: str) -> tuple[str, list[dict]]:
     """
     # 1. Tentative avec youtube-transcript-api
     try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-        
-        # Priorité au français, puis anglais, puis première langue disponible
-        try:
-            transcript_obj = transcript_list.find_transcript(["fr"])
-        except Exception:
+        api = YouTubeTranscriptApi()
+        if hasattr(api, "fetch"):
+            raw_items = api.fetch(video_id, languages=["fr", "en", "es", "auto"])
+        elif hasattr(YouTubeTranscriptApi, "list_transcripts"):
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
             try:
-                transcript_obj = transcript_list.find_transcript(["en"])
+                transcript_obj = transcript_list.find_transcript(["fr"])
             except Exception:
-                transcript_obj = next(iter(transcript_list))
+                try:
+                    transcript_obj = transcript_list.find_transcript(["en"])
+                except Exception:
+                    transcript_obj = next(iter(transcript_list))
+            raw_items = transcript_obj.fetch()
+        else:
+            raw_items = api.list(video_id).fetch()
 
-        raw_items = transcript_obj.fetch()
         segments = [
             {
-                "text": item.get("text", "").strip(),
-                "start": float(item.get("start", 0)),
-                "duration": float(item.get("duration", 0)),
+                "text": item.get("text", "").strip() if isinstance(item, dict) else getattr(item, "text", "").strip(),
+                "start": float(item.get("start", 0) if isinstance(item, dict) else getattr(item, "start", 0)),
+                "duration": float(item.get("duration", 0) if isinstance(item, dict) else getattr(item, "duration", 0)),
             }
             for item in raw_items
-            if item.get("text", "").strip()
+            if (item.get("text", "").strip() if isinstance(item, dict) else getattr(item, "text", "").strip())
         ]
         full_text = " ".join(seg["text"] for seg in segments)
         if full_text:
             return full_text, segments
-    except (NoTranscriptFound, TranscriptsDisabled, Exception) as yt_err:
+    except Exception as yt_err:
         print(f"[YouTubeTranscriptApi] {yt_err}. Tentative de repli vers Supadata...")
 
     # 2. Repli Supadata

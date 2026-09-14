@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -20,8 +19,6 @@
     "@langchain/pinecone": "^1.0.0",
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "@pinecone-database/pinecone": "^5.0.2",
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
     "@supadata/js": "^1.4.0",
     "@vidstack/react": "^1.12.13",
     "ai": "^6.0.168",
@@ -30,7 +27,6 @@
     "lucide-react": "^1.17.0",
     "next": "^16.2.6",
     "next-themes": "^0.4.6",
-    "pg": "^8.21.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -44,12 +40,10 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
-    "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

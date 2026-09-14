@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     #OPENROUTER_MODEL: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
     OPENROUTER_MODEL: str = "google/gemini-2.5-flash"
-    EMBEDDING_MODEL: str = "perplexity/pplx-embed-v1-0.6b"
+    EMBEDDING_MODEL: str = "openai/text-embedding-3-large"
     #EMBEDDING_MODEL: str = "nvidia/llama-nemotron-embed-vl-1b-v2:free"
 
     # Pinecone Vector DB

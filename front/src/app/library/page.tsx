@@ -1,7 +1,7 @@
-import { prisma } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import Image from 'next/image';
+import { API_BASE_URL } from '@/lib/api-config';
 import { DeleteVideoButton } from '@/components/library/delete-video-button';
 import { AddVideoButton } from '@/components/library/add-video-button';
 import { Progress } from '@/components/ui/progress';
@@ -9,9 +9,23 @@ import { Badge } from '@/components/ui/badge';
 import { Play, Clock, BookOpen, Database, Library } from 'lucide-react';
 
 /* ─────────────────────────────────────────────
+   Types
+   ───────────────────────────────────────────── */
+type VideoCard = {
+  id: string;
+  title: string;
+  author: string | null;
+  thumbnail: string | null;
+  duration: number;
+  createdAt: Date;
+  _count: { segments: number };
+  attempts: { score: number; total: number }[];
+};
+
+/* ─────────────────────────────────────────────
    Data fetching
    ───────────────────────────────────────────── */
-async function getLibraryVideos() {
+async function getLibraryVideos(): Promise<VideoCard[] | null> {
   try {
     // Récupérer le clerkId depuis la session
     const { userId: clerkId } = await auth();
@@ -20,32 +34,41 @@ async function getLibraryVideos() {
       return null; // Pas connecté (ne devrait pas arriver car route protégée)
     }
 
-    // Trouver l'utilisateur en base
-    const user = await prisma.user.findUnique({
-      where: { clerkId },
-      select: { id: true },
+    const res = await fetch(`${API_BASE_URL}/videos/me`, {
+      headers: {
+        'x-clerk-user-id': clerkId,
+      },
+      cache: 'no-store',
     });
 
-    if (!user) {
-      return []; // Utilisateur pas encore en base (pas de vidéos)
+    if (!res.ok) {
+      console.error('API ERROR IN LIBRARY:', await res.text());
+      return null;
     }
 
-    return await prisma.video.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        thumbnail: true,
-        duration: true,
-        createdAt: true,
-        _count: { select: { segments: true } },
-        attempts: { select: { score: true, total: true } },
-      },
-    });
+    const videos = await res.json();
+
+    return videos.map((v: {
+      id: string;
+      title: string;
+      author: string | null;
+      thumbnail: string | null;
+      duration: number;
+      createdAt: string;
+      segmentsCount?: number;
+      attempts?: { score: number; total: number }[];
+    }): VideoCard => ({
+      id: v.id,
+      title: v.title,
+      author: v.author,
+      thumbnail: v.thumbnail,
+      duration: v.duration,
+      createdAt: new Date(v.createdAt),
+      _count: { segments: v.segmentsCount ?? 0 },
+      attempts: v.attempts ?? [],
+    }));
   } catch (error) {
-    console.error('PRISMA ERROR IN LIBRARY:', error);
+    console.error('FETCH ERROR IN LIBRARY:', error);
     return null;
   }
 }
@@ -68,20 +91,6 @@ function formatDate(date: Date): string {
     year: 'numeric',
   }).format(new Date(date));
 }
-
-/* ─────────────────────────────────────────────
-   Types
-   ───────────────────────────────────────────── */
-type VideoCard = {
-  id: string;
-  title: string;
-  author: string | null;
-  thumbnail: string | null;
-  duration: number;
-  createdAt: Date;
-  _count: { segments: number };
-  attempts: { score: number; total: number }[];
-};
 
 /* ─────────────────────────────────────────────
    Mastery helper
@@ -242,7 +251,7 @@ export default async function LibraryPage() {
                 Ma Bibliothèque
               </h1>
               <p className="mt-2 text-sm text-on-surface/35 max-w-sm leading-relaxed">
-                Toutes les vidéos transformées en sessions d'étude actives.
+                Toutes les vidéos transformées en sessions d&apos;étude actives.
               </p>
 
               {/* Indicateur de limite d'usage (Shadcn UI Progress & Badge) */}

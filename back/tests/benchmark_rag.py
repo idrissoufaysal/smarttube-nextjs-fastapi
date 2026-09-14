@@ -42,7 +42,11 @@ from app.services.langfuse_client import (
     langfuse_trace_context,
     score_trace,
 )
-from app.services.vectorstore import index_transcript_segments, similarity_search_rag
+from app.services.vectorstore import (
+    delete_video_vectors,
+    index_transcript_segments,
+    similarity_search_rag,
+)
 from app.services.youtube import fetch_youtube_transcript
 
 DATASET_PATH = CURRENT_DIR / "dataset.json"
@@ -55,6 +59,7 @@ class ExperimentConfig:
     retrieval_mode: Literal["semantic", "hybrid", "reranked"]
     model_name: str
     k: int = 5
+    reindex: bool = False
 
 
 # ==============================================================================
@@ -112,17 +117,19 @@ def sync_dataset_to_langfuse() -> list[dict]:
 # 2. ASSURANCE D'INDEXATION PINECONE
 # ==============================================================================
 
-async def ensure_video_indexed(video_id: str) -> None:
-    """Vérifie si la vidéo a des vecteurs dans Pinecone ; sinon l'indexe automatiquement."""
-    test_search = await similarity_search_rag(video_id, "test", k=1)
-    if test_search:
-        return
+async def ensure_video_indexed(video_id: str, force_reindex: bool = False) -> None:
+    """Vérifie si la vidéo a des vecteurs dans Pinecone ; sinon ou si force_reindex, réindexe avec le modèle d'embedding actif."""
+    if not force_reindex:
+        test_search = await similarity_search_rag(video_id, "test", k=1)
+        if test_search:
+            return
 
-    print(f"⚙️ Vidéo '{video_id}' non indexée dans Pinecone. Téléchargement et indexation des sous-titres...", flush=True)
+    print(f"⚙️ Indexation de la vidéo '{video_id}' avec le modèle d'embedding actif ({settings.EMBEDDING_MODEL})...", flush=True)
+    await delete_video_vectors(video_id)
     full_text, segments = await fetch_youtube_transcript(video_id)
     if segments:
         count = await index_transcript_segments(video_id, segments)
-        print(f"✅ Auto-indexation terminée : {count} chunks insérés dans Pinecone pour '{video_id}'.", flush=True)
+        print(f"✅ Indexation terminée : {count} chunks insérés dans Pinecone pour '{video_id}'.", flush=True)
     else:
         print(f"❌ Impossible de récupérer les sous-titres pour la vidéo '{video_id}'.", flush=True)
 
@@ -417,7 +424,7 @@ async def run_experiment_suite(config: ExperimentConfig):
         return
 
     sample_video_id = items[0].get("metadata", {}).get("video_id", "5lZhUc6MW8w")
-    await ensure_video_indexed(sample_video_id)
+    await ensure_video_indexed(sample_video_id, force_reindex=config.reindex)
 
     results = []
     print(f"\n📊 Évaluation des {len(items)} questions du dataset...\n", flush=True)
@@ -473,6 +480,11 @@ def main():
         help="Nom du run d'expérimentation (généré automatiquement si omis)",
     )
     parser.add_argument(
+        "--reindex",
+        action="store_true",
+        help="Forcer la réindexation complète de la vidéo avec le modèle d'embedding actif",
+    )
+    parser.add_argument(
         "--sync-dataset",
         action="store_true",
         help="Synchroniser uniquement le dataset vers Langfuse et quitter",
@@ -491,14 +503,24 @@ def main():
 
     if args.matrix:
         modes = ["semantic", "hybrid", "reranked"]
-        for m in modes:
+        for idx, m in enumerate(modes):
             run_name = f"{m}-{args.model.split('/')[-1]}"
-            cfg = ExperimentConfig(run_name=run_name, retrieval_mode=m, model_name=args.model)
+            cfg = ExperimentConfig(
+                run_name=run_name,
+                retrieval_mode=m,
+                model_name=args.model,
+                reindex=(args.reindex and idx == 0),
+            )
             asyncio.run(run_experiment_suite(cfg))
     else:
         model_short = args.model.split("/")[-1]
         run_name = args.run_name or f"{args.mode}-{model_short}"
-        config = ExperimentConfig(run_name=run_name, retrieval_mode=args.mode, model_name=args.model)
+        config = ExperimentConfig(
+            run_name=run_name,
+            retrieval_mode=args.mode,
+            model_name=args.model,
+            reindex=args.reindex,
+        )
         asyncio.run(run_experiment_suite(config))
 
 
