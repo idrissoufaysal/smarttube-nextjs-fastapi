@@ -1,12 +1,22 @@
+from typing import TYPE_CHECKING
+
 import asyncio
+
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone
 from langfuse import observe
 
+if TYPE_CHECKING:
+    from pinecone.core.openapi.db_data.model.scored_vector import ScoredVector
+
 from app.config.settings import settings
+from app.services.embeddings import PerplexityEmbeddings
+from app.services.rerank import rerank_documents
+
+# Constante standard de la fusion Reciprocal Rank Fusion (RRF)
+RRF_K = 60
 
 # Registre d'événements pour synchroniser les indexations en cours
 _indexing_events: dict[str, asyncio.Event] = {}
@@ -33,13 +43,43 @@ async def wait_for_indexing_if_active(video_id: str, timeout: float = 8.0) -> bo
     return False
 
 
-def get_embeddings() -> OpenAIEmbeddings:
+_bm25_encoder = None
+_bm25_unavailable = False
+
+
+def get_bm25_encoder():
     """
-    Initialise les embeddings compatibles avec OpenRouter ou OpenAI direct.
-    Si text-embedding-3 est utilisé, projette en dimension 2048 pour matcher l'index Pinecone.
+    Retourne l'encodeur BM25 pré-entraîné (pinecone-text) pour la branche sparse
+    du hybrid search. Singleton lazy ; en cas d'échec (ex: hors-ligne), le RAG
+    bascule proprement sur la recherche dense seule.
     """
+    global _bm25_encoder, _bm25_unavailable
+    if _bm25_unavailable:
+        return None
+    if _bm25_encoder is None:
+        try:
+            from pinecone_text.sparse import BM25Encoder
+
+            _bm25_encoder = BM25Encoder.default()
+        except Exception as e:
+            print(f"[VectorStore] BM25 indisponible ({e}) — recherche en mode dense seul.")
+            _bm25_unavailable = True
+            return None
+    return _bm25_encoder
+
+
+def get_embeddings():
+    """
+    Initialise les embeddings.
+    Priorité : Perplexity (pplx-embed-v1-0.6b, 1024 dims, api.perplexity.ai) si
+    PERPLEXITY_API_KEY est configuré, sinon repli OpenAI/OpenRouter (legacy).
+    """
+    if settings.PERPLEXITY_API_KEY:
+        return PerplexityEmbeddings()
+
+    # --- Repli legacy : OpenAI / OpenRouter ---
     is_v3 = "text-embedding-3" in settings.EMBEDDING_MODEL.lower()
-    dimensions = 2048 if is_v3 else None
+    dimensions = settings.EMBEDDING_DIMENSIONS if is_v3 else None
 
     if settings.AI_KEY:
         kwargs = {
@@ -69,18 +109,13 @@ def get_pinecone_client() -> Pinecone:
     return Pinecone(api_key=settings.PINECONE_API_KEY)
 
 
-def get_vector_store(video_id: str) -> PineconeVectorStore:
+def get_pinecone_index():
     """
-    Retourne l'instance LangChain PineconeVectorStore isolée par namespace (video_id).
+    Retourne l'index Pinecone brut. L'isolation par vidéo se fait via le
+    namespace (= video_id), utilisé à l'upsert comme à la recherche.
     """
-    embeddings = get_embeddings()
-    return PineconeVectorStore(
-        index_name=settings.PINECONE_INDEX,
-        embedding=embeddings,
-        namespace=video_id,
-        pinecone_api_key=settings.PINECONE_API_KEY,
-        
-    )
+    pc = get_pinecone_client()
+    return pc.Index(settings.PINECONE_INDEX)
 
 
 @observe(name="index-transcript-segments")
@@ -136,10 +171,39 @@ async def index_transcript_segments(video_id: str, segments: list[dict]) -> int:
 
         splits = splitter.split_documents(grouped_docs)
         if splits:
-            vector_store = get_vector_store(video_id)
-            # add_documents synchronise vers Pinecone
-            vector_store.add_documents(splits)
-            print(f"[Pinecone] {len(splits)} chunks indexés dans le namespace '{video_id}'")
+            texts = [s.page_content for s in splits]
+            embeddings = get_embeddings()
+            # Embeddings hors du thread event-loop (appel bloquant réseau)
+            dense_vectors = await asyncio.to_thread(embeddings.embed_documents, texts)
+
+            # Branche sparse (BM25) du hybrid search
+            bm25 = get_bm25_encoder()
+            sparse_vectors = bm25.encode_documents(texts) if bm25 else None
+
+            # IDs déterministes → l'upsert est idempotent (ré-indexation sans doublons)
+            vectors = []
+            for i, split in enumerate(splits):
+                vector: dict = {
+                    "id": f"{video_id}-{i:04d}",
+                    "values": dense_vectors[i],
+                    "metadata": {
+                        "text": split.page_content,
+                        **split.metadata,
+                    },
+                }
+                if sparse_vectors:
+                    vector["sparse_values"] = sparse_vectors[i]
+                vectors.append(vector)
+
+            index = get_pinecone_index()
+            index.upsert(
+                vectors=vectors,
+                namespace=video_id,
+                batch_size=100,
+                show_progress=False,
+            )
+            mode = "dense+sparse (hybrid)" if sparse_vectors else "dense seul"
+            print(f"[Pinecone] {len(splits)} chunks indexés dans le namespace '{video_id}' [{mode}]")
 
         return len(splits) if splits else 0
     finally:
@@ -152,17 +216,81 @@ async def index_transcript_segments(video_id: str, segments: list[dict]) -> int:
 @observe(name="pinecone-retrieval", as_type="retriever")
 async def similarity_search_rag(video_id: str, query: str, k: int = 5) -> str:
     """
-    Effectue une recherche par similarité dans le namespace de la vidéo
-    et formate les résultats avec les marqueurs temporels [Timeline: mm:ss].
+    Pipeline de retrieval complet :
+    1. Hybrid search : dense (embeddings) + sparse (BM25), fusionnés par RRF
+    2. Reranking des candidats via cohere/rerank-4-fast (OpenRouter)
+    3. Formatage avec les marqueurs temporels [Timeline: mm:ss]
     Attend automatiquement si une indexation est déjà en cours pour cette vidéo.
     """
     try:
         # Attendre que l'indexation se termine si elle est en cours
         await wait_for_indexing_if_active(video_id)
 
-        vector_store = get_vector_store(video_id)
-        docs = vector_store.similarity_search(query, k=k)
+        # "Retrieve wide, rerank narrow" : sur-récupérer puis reranker
+        candidates_n = max(k, settings.RERANK_CANDIDATES)
+        index = get_pinecone_index()
+        embeddings = get_embeddings()
 
+        # --- 1a. Recherche dense (similarité cosinus) ---
+        query_dense = await asyncio.to_thread(embeddings.embed_query, query)
+        dense_response = index.query(
+            vector=query_dense,
+            top_k=candidates_n,
+            include_metadata=True,
+            namespace=video_id,
+        )
+
+        fused_scores: dict[str, float] = {}
+        hits_by_id: dict[str, "ScoredVector"] = {}
+
+        def _fuse(matches) -> None:
+            for rank, match in enumerate(matches, start=1):
+                fused_scores[match.id] = fused_scores.get(match.id, 0.0) + 1.0 / (RRF_K + rank)
+                hits_by_id[match.id] = match
+
+        _fuse(dense_response.matches or [])
+
+        # --- 1b. Recherche sparse (BM25, correspondance mot-clé exacte) ---
+        bm25 = get_bm25_encoder()
+        if bm25:
+            try:
+                query_sparse = bm25.encode_queries([query])[0]
+                sparse_response = index.query(
+                    sparse_vector=query_sparse,
+                    top_k=candidates_n,
+                    include_metadata=True,
+                    namespace=video_id,
+                )
+                _fuse(sparse_response.matches or [])
+            except Exception as sparse_err:
+                print(f"[VectorStore RAG] Recherche BM25 échouée ({sparse_err}) — dense seul.")
+
+        # --- 2. Reranking des candidats fusionnés (RRF → cohere/rerank-4-fast) ---
+        ranked_ids = sorted(fused_scores, key=lambda mid: fused_scores[mid], reverse=True)
+        docs: list[Document] = []
+        for match_id in ranked_ids[:candidates_n]:
+            match = hits_by_id[match_id]
+            metadata = match.metadata or {}
+            text = metadata.get("text", "")
+            if not text:
+                continue
+            docs.append(
+                Document(
+                    page_content=text,
+                    metadata={
+                        **metadata,
+                        "rrf_score": fused_scores[match_id],
+                        "pinecone_score": match.score,
+                    },
+                )
+            )
+
+        if len(docs) > k:
+            docs = await rerank_documents(query, docs, top_n=k)
+        else:
+            docs = docs[:k]
+
+        # --- 3. Formatage temporel [Timeline: mm:ss] ---
         formatted_chunks: list[str] = []
         for doc in docs:
             start_val = float(doc.metadata.get("start", 0))

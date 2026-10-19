@@ -23,12 +23,23 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     #OPENROUTER_MODEL: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
     OPENROUTER_MODEL: str = "google/gemini-2.5-flash"
-    EMBEDDING_MODEL: str = "openai/text-embedding-3-large"
-    #EMBEDDING_MODEL: str = "nvidia/llama-nemotron-embed-vl-1b-v2:free"
+
+    # Embeddings (Perplexity Embeddings API — api.perplexity.ai)
+    # NOTE : pplx-embed-v1-0.6b n'est PAS disponible via OpenRouter, uniquement
+    # sur l'API Embeddings de Perplexity (nécessite PERPLEXITY_API_KEY).
+    PERPLEXITY_API_KEY: str | None = None
+    EMBEDDING_MODEL: str = "pplx-embed-v1-0.6b"  # 1024 dimensions, 32K contexte
+    EMBEDDING_DIMENSIONS: int = 1024  # Matryoshka : 128-1024 pour le modèle 0.6b
+    #EMBEDDING_MODEL: str = "openai/text-embedding-3-large"  # repli legacy (OpenAI/OpenRouter)
+
+    # Hybrid Search (BM25 sparse + dense) & Reranking (OpenRouter)
+    RERANK_MODEL: str = "cohere/rerank-4-fast"
+    RERANK_CANDIDATES: int = 15  # sur-recuperation avant reranking (retrieve wide, rerank narrow)
+    RERANK_TOP_N: int = 5  # nombre final de chunks injectés dans le prompt
 
     # Pinecone Vector DB
     PINECONE_API_KEY: str
-    PINECONE_INDEX: str = "smarttube"
+    PINECONE_INDEX: str = "smarttube"  # doit avoir une dimension = EMBEDDING_DIMENSIONS (1024)
     PINECONE_NAMESPACE_DEFAULT: str = "transcripts"
 
     # Services tiers
@@ -67,6 +78,16 @@ class Settings(BaseSettings):
 
         # asyncpg n'accepte pas 'sslmode', il utilise 'ssl'
         url = url.replace("sslmode=require", "ssl=require")
+
+        # asyncpg n'accepte pas certains paramètres (Neon: channel_binding)
+        url = url.replace("&channel_binding=require", "")
+        url = url.replace("channel_binding=require", "")
+        # Nettoyer les doublons
+        url = url.replace("&&", "&")
+        if "?" in url and url.endswith("&"):
+            url = url[:-1]
+        if url.endswith("?"):
+            url = url[:-1]
         return url
 
 
