@@ -1,12 +1,16 @@
 import { auth } from '@clerk/nextjs/server';
-import Link from 'next/link';
 import Image from 'next/image';
+import type { Metadata } from 'next';
+import { getTranslations, getLocale } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api-config';
 import { DeleteVideoButton } from '@/components/library/delete-video-button';
 import { AddVideoButton } from '@/components/library/add-video-button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Play, Clock, BookOpen, Database, Library } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 /* ─────────────────────────────────────────────
    Types
@@ -45,8 +49,9 @@ async function getLibraryVideos(): Promise<VideoCard[] | null> {
       console.error('API ERROR IN LIBRARY:', await res.text());
       return null;
     }
-
+    
     const videos = await res.json();
+    
 
     return videos.map((v: {
       id: string;
@@ -84,8 +89,8 @@ function formatDuration(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('fr-FR', {
+function formatDate(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -114,7 +119,9 @@ function getMastery(attempts: { score: number; total: number }[]) {
 /* ─────────────────────────────────────────────
    Video Card Component
    ───────────────────────────────────────────── */
-function VideoCardComponent({ video }: { video: VideoCard }) {
+async function VideoCardComponent({ video }: { video: VideoCard }) {
+  const t = await getTranslations('library.card');
+  const locale = await getLocale();
   const studyUrl = `https://www.youtube.com/watch?v=${video.id}`;
   const mastery = getMastery(video.attempts);
 
@@ -127,7 +134,7 @@ function VideoCardComponent({ video }: { video: VideoCard }) {
       {/* ── Card link ── */}
       <Link
         href={`/study?url=${encodeURIComponent(studyUrl)}`}
-        className="block rounded-2xl bg-surface-dim/80 border border-white/[0.04] overflow-hidden transition-all duration-300 hover:border-white/[0.08] hover:bg-surface-low/80 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40"
+        className="block rounded-2xl bg-surface-dim/80 border border-foreground/4 overflow-hidden transition-all duration-300 hover:border-foreground/[0.08] hover:bg-surface-low/80 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-black/40"
       >
         {/* Hover glow */}
         <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
@@ -185,25 +192,25 @@ function VideoCardComponent({ video }: { video: VideoCard }) {
                   ? 'bg-emerald-500/8 text-emerald-400 border-emerald-500/20'
                   : 'bg-amber-500/8 text-amber-400 border-amber-500/20'
               }`}>
-                {mastery.isMastered ? '🏆 MAÎTRISÉ' : '💡 APPRIS'}
+                {mastery.isMastered ? t('mastered') : t('learned')}
               </span>
               <span className="text-[10px] text-on-surface/30 font-mono">
-                {mastery.best.score}/{mastery.best.total} · {mastery.count} quiz
+                {mastery.best.score}/{mastery.best.total} · {t('attempts', { count: mastery.count })}
               </span>
             </div>
           ) : (
-            <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-lg border border-white/[0.05] bg-white/[0.02] text-on-surface/20 tracking-wider">
-              📖 NON TENTÉ
+            <span className="inline-block text-[9px] font-bold px-2 py-0.5 rounded-lg border border-foreground/[0.05] bg-foreground/[0.02] text-on-surface/20 tracking-wider">
+              {t('notAttempted')}
             </span>
           )}
 
           {/* Footer meta */}
-          <div className="flex items-center justify-between text-[10px] text-on-surface/25 font-medium pt-1 border-t border-white/[0.03]">
+          <div className="flex items-center justify-between text-[10px] text-on-surface/25 font-medium pt-1 border-t border-foreground/[0.03]">
             <span className="flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
-              {video._count.segments} segments
+              {t('segments', { count: video._count.segments })}
             </span>
-            <span>{formatDate(video.createdAt)}</span>
+            <span>{formatDate(video.createdAt, locale)}</span>
           </div>
         </div>
       </Link>
@@ -216,7 +223,7 @@ function VideoCardComponent({ video }: { video: VideoCard }) {
    ───────────────────────────────────────────── */
 function StatPill({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className="flex flex-col items-center px-5 py-3 rounded-2xl bg-surface-dim/80 border border-white/[0.04] min-w-[72px]">
+    <div className="flex flex-col items-center px-5 py-3 rounded-2xl bg-surface-dim/80 border border-foreground/4 min-w-[72px]">
       <span className="text-xl font-black gradient-primary-text tabular-nums">{value}</span>
       <span className="text-[9px] text-on-surface/25 uppercase tracking-[0.12em] mt-0.5 font-bold">{label}</span>
     </div>
@@ -226,7 +233,22 @@ function StatPill({ value, label }: { value: string | number; label: string }) {
 /* ─────────────────────────────────────────────
    Page
    ───────────────────────────────────────────── */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'library.meta' });
+
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
+
 export default async function LibraryPage() {
+  const t = await getTranslations('library');
   const videos = await getLibraryVideos();
 
   const totalSegments = videos?.reduce((a, v) => a + v._count.segments, 0) ?? 0;
@@ -236,39 +258,39 @@ export default async function LibraryPage() {
     <div className="min-h-screen bg-background">
 
       {/* ── Header ── */}
-      <div className="relative overflow-hidden border-b border-white/[0.04]">
+      <div className="relative overflow-hidden border-b border-foreground/[0.04]">
         {/* Ambient glow */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_-10%,_rgba(255,180,168,0.055),_transparent_70%)]" />
 
         <div className="mx-auto max-w-6xl px-5 md:px-8 pt-14 pb-10 relative">
           {/* Label */}
-          <p className="text-label text-primary/70 mb-3 tracking-[0.15em]">Your Collection</p>
+          <p className="text-label text-primary/70 mb-3 tracking-[0.15em]">{t('label')}</p>
 
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
               <h1 className="text-headline text-on-surface flex items-center gap-3">
                 <Library className="w-7 h-7 text-primary/60 shrink-0" />
-                Ma Bibliothèque
+                {t('title')}
               </h1>
               <p className="mt-2 text-sm text-on-surface/35 max-w-sm leading-relaxed">
-                Toutes les vidéos transformées en sessions d&apos;étude actives.
+                {t('subtitle')}
               </p>
 
               {/* Indicateur de limite d'usage (Shadcn UI Progress & Badge) */}
               {videos !== null && (
                 <div className="mt-4 max-w-xs space-y-2">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-on-surface/40 font-medium">Usage gratuit</span>
+                    <span className="text-on-surface/40 font-medium">{t('usage')}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-on-surface/75 font-semibold font-mono">{videos.length} / 4</span>
                       {videos.length >= 4 && (
                         <Badge variant="destructive" className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider scale-90">
-                          Maximum
+                          {t('maximum')}
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <Progress value={(videos.length / 4) * 100} className="h-1 bg-white/5" />
+                  <Progress value={(videos.length / 4) * 100} className="h-1 bg-foreground/5" />
                 </div>
               )}
             </div>
@@ -277,9 +299,9 @@ export default async function LibraryPage() {
             <div className="flex items-center gap-4 shrink-0 flex-wrap">
               {videos && videos.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <StatPill value={videos.length} label="Vidéos" />
-                  <StatPill value={totalSegments.toLocaleString()} label="Segments" />
-                  <StatPill value={totalQuiz} label="Quiz" />
+                  <StatPill value={videos.length} label={t('stats.videos')} />
+                  <StatPill value={totalSegments.toLocaleString()} label={t('stats.segments')} />
+                  <StatPill value={totalQuiz} label={t('stats.quiz')} />
                 </div>
               )}
               <AddVideoButton variant="header" />
@@ -294,18 +316,21 @@ export default async function LibraryPage() {
         {/* DB not configured */}
         {videos === null && (
           <div className="flex flex-col items-center justify-center py-28 text-center animate-in fade-in duration-500">
-            <div className="w-16 h-16 rounded-2xl bg-surface-dim border border-white/[0.05] flex items-center justify-center mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-surface-dim border border-foreground/[0.05] flex items-center justify-center mb-6">
               <Database className="w-7 h-7 text-primary/60" />
             </div>
-            <h2 className="text-lg font-bold text-on-surface mb-2">Base de données non configurée</h2>
+            <h2 className="text-lg font-bold text-on-surface mb-2">{t('db.title')}</h2>
             <p className="text-sm text-on-surface/40 max-w-sm mb-8 leading-relaxed">
-              Ajoutez votre variable{' '}
-              <code className="text-primary bg-white/5 px-1.5 py-0.5 rounded text-xs">DATABASE_URL</code>{' '}
-              dans le fichier{' '}
-              <code className="text-primary bg-white/5 px-1.5 py-0.5 rounded text-xs">.env</code>{' '}
-              pour activer votre bibliothèque personnelle.
+              {t.rich('db.desc', {
+                dsn: (chunks) => (
+                  <code className="text-primary bg-foreground/5 px-1.5 py-0.5 rounded text-xs">{chunks}</code>
+                ),
+                env: (chunks) => (
+                  <code className="text-primary bg-foreground/5 px-1.5 py-0.5 rounded text-xs">{chunks}</code>
+                ),
+              })}
             </p>
-            <code className="text-xs text-on-surface/25 bg-surface-dim px-5 py-3 rounded-xl border border-white/[0.05] font-mono">
+            <code className="text-xs text-on-surface/25 bg-surface-dim px-5 py-3 rounded-xl border border-foreground/[0.05] font-mono">
               DATABASE_URL=&quot;postgresql://user:pass@host/smarttube&quot;
             </code>
           </div>
@@ -316,7 +341,7 @@ export default async function LibraryPage() {
           <div className="flex flex-col items-center justify-center py-28 text-center animate-in fade-in duration-500">
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-primary/8 blur-3xl rounded-full scale-[2]" />
-              <div className="relative w-20 h-20 rounded-3xl bg-surface-dim border border-white/[0.05] flex items-center justify-center">
+              <div className="relative w-20 h-20 rounded-3xl bg-surface-dim border border-foreground/[0.05] flex items-center justify-center">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="h-10 w-10 text-on-surface/15">
                   <rect x="2" y="3" width="20" height="14" rx="2" />
                   <path d="M8 21h8M12 17v4" />
@@ -324,9 +349,9 @@ export default async function LibraryPage() {
                 </svg>
               </div>
             </div>
-            <h2 className="text-lg font-bold text-on-surface mb-2">Votre bibliothèque est vide</h2>
+            <h2 className="text-lg font-bold text-on-surface mb-2">{t('empty.title')}</h2>
             <p className="text-sm text-on-surface/35 max-w-sm mb-8 leading-relaxed">
-              Vous n&apos;avez pas encore étudié de vidéo. Collez un lien YouTube pour démarrer.
+              {t('empty.desc')}
             </p>
             <AddVideoButton variant="empty-state" />
           </div>

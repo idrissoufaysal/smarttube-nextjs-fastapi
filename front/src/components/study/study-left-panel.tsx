@@ -165,10 +165,10 @@ export function StudyLeftPanel({
         </div>
 
         {/* ── TABS CARD ── */}
-        <div className="rounded-2xl border border-white/[0.05] bg-surface-dim/80 backdrop-blur-sm overflow-hidden shadow-xl shadow-black/20 animate-in fade-in slide-in-from-bottom-3 duration-600">
+        <div className="rounded-2xl border border-foreground/[0.05] bg-surface-dim/80 backdrop-blur-sm overflow-hidden shadow-xl shadow-black/20 animate-in fade-in slide-in-from-bottom-3 duration-600">
 
           {/* Tab switcher - Desktop */}
-          <div className="hidden lg:flex items-center border-b border-white/[0.05] bg-surface-low/50 px-4 pt-3 gap-1">
+          <div className="hidden lg:flex items-center border-b border-foreground/[0.05] bg-surface-low/50 px-4 pt-3 gap-1">
             <TabButton
               active={studyTab === 'transcript'}
               icon={<FileText className="w-3.5 h-3.5" />}
@@ -185,7 +185,7 @@ export function StudyLeftPanel({
           </div>
 
           {/* Tab switcher - Mobile */}
-          <div className="flex lg:hidden items-center border-b border-white/[0.05] bg-surface-low/50 px-4 pt-3 gap-1 overflow-x-auto scrollbar-none">
+          <div className="flex lg:hidden items-center border-b border-foreground/[0.05] bg-surface-low/50 px-4 pt-3 gap-1 overflow-x-auto scrollbar-none">
             <TabButton
               active={studyTab === 'transcript'}
               icon={<FileText className="w-3.5 h-3.5" />}
@@ -288,7 +288,7 @@ function TabButton({
         'flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-xs font-semibold transition-all duration-200 border-b-2 -mb-px relative',
         active
           ? 'text-primary border-primary bg-primary/5'
-          : 'text-on-surface/35 border-transparent hover:text-on-surface/60 hover:bg-white/[0.03]',
+          : 'text-on-surface/35 border-transparent hover:text-on-surface/60 hover:bg-foreground/[0.03]',
         highlight && !active && 'text-primary/50'
       )}
     >
@@ -327,7 +327,7 @@ function TranscriptTab({
             placeholder="Rechercher dans la transcription…"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full bg-surface-container/50 border border-white/[0.06] rounded-xl pl-9 pr-4 py-2 text-xs text-on-surface placeholder:text-on-surface/25 focus:outline-none focus:border-primary/30 focus:bg-surface-container transition-all"
+            className="w-full bg-surface-container/50 border border-foreground/[0.06] rounded-xl pl-9 pr-4 py-2 text-xs text-on-surface placeholder:text-on-surface/25 focus:outline-none focus:border-primary/30 focus:bg-surface-container transition-all"
           />
         </div>
 
@@ -338,7 +338,7 @@ function TranscriptTab({
             'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border shrink-0',
             showTimestamps
               ? 'bg-primary/10 border-primary/25 text-primary'
-              : 'bg-white/[0.03] border-white/[0.06] text-on-surface/40 hover:text-on-surface/70'
+              : 'bg-foreground/[0.03] border-foreground/[0.06] text-on-surface/40 hover:text-on-surface/70'
           )}
         >
           <Clock className="w-3 h-3" />
@@ -357,7 +357,7 @@ function TranscriptTab({
       </div>
 
       {/* Segments list */}
-      <div className="max-h-[380px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="max-h-[380px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin scrollbar-thumb-foreground/10 scrollbar-track-transparent">
         {loading ? (
           <>
             {Array.from({ length: 10 }).map((_, i) => (
@@ -378,7 +378,7 @@ function TranscriptTab({
                   'flex gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer group',
                   isActive
                     ? 'bg-primary/8 ring-1 ring-primary/15'
-                    : 'hover:bg-white/[0.025]'
+                    : 'hover:bg-foreground/[0.025]'
                 )}
                 onClick={() => handleTimelineClick(seg.start)}
               >
@@ -438,7 +438,7 @@ function NotesTab({
             L'IA analyse la transcription et structure votre synthèse.
           </p>
         </div>
-        <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+        <div className="w-48 h-1 bg-foreground/5 rounded-full overflow-hidden">
           <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: '70%' }} />
         </div>
       </div>
@@ -449,7 +449,7 @@ function NotesTab({
     return (
       <div className="space-y-4 animate-in fade-in duration-200">
         {/* Action bar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap pb-4 border-b border-white/[0.05]">
+        <div className="flex items-center justify-between gap-3 flex-wrap pb-4 border-b border-foreground/[0.05]">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-primary/70" />
             <span className="text-xs font-semibold text-on-surface/70">Synthèse de la vidéo</span>
@@ -460,8 +460,8 @@ function NotesTab({
               size="sm"
               onClick={handleCopyNotes}
               className={cn(
-                'h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-white/[0.06]',
-                copied ? 'text-green-400 border-green-500/20 bg-green-500/5' : 'text-on-surface/50 hover:text-on-surface hover:bg-white/[0.04]'
+                'h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-foreground/[0.06]',
+                copied ? 'text-green-400 border-green-500/20 bg-green-500/5' : 'text-on-surface/50 hover:text-on-surface hover:bg-foreground/[0.04]'
               )}
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -471,7 +471,7 @@ function NotesTab({
               variant="ghost"
               size="sm"
               onClick={handleExportNotes}
-              className="h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-white/[0.06] text-on-surface/50 hover:text-on-surface hover:bg-white/[0.04]"
+              className="h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-foreground/[0.06] text-on-surface/50 hover:text-on-surface hover:bg-foreground/[0.04]"
             >
               Markdown
             </Button>
@@ -487,7 +487,7 @@ function NotesTab({
               variant="ghost"
               size="sm"
               onClick={() => handleGenerateNotes(true)}
-              className="h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-white/[0.06] text-on-surface/40 hover:text-on-surface/70"
+              className="h-7 text-xs gap-1.5 rounded-lg px-2.5 border border-foreground/[0.06] text-on-surface/40 hover:text-on-surface/70"
             >
               <RefreshCw className="w-3 h-3" />
               Régénérer
@@ -496,7 +496,7 @@ function NotesTab({
         </div>
 
         {/* Notes content */}
-        <div className="max-h-[450px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <div className="max-h-[450px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-foreground/10 scrollbar-track-transparent">
           <div className="prose-sm space-y-0.5">
             {parseMarkdown(notes)}
           </div>

@@ -24,22 +24,19 @@ class Settings(BaseSettings):
     #OPENROUTER_MODEL: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
     OPENROUTER_MODEL: str = "google/gemini-2.5-flash"
 
-    # Embeddings (Perplexity Embeddings API — api.perplexity.ai)
-    # NOTE : pplx-embed-v1-0.6b n'est PAS disponible via OpenRouter, uniquement
-    # sur l'API Embeddings de Perplexity (nécessite PERPLEXITY_API_KEY).
-    PERPLEXITY_API_KEY: str | None = None
-    EMBEDDING_MODEL: str = "pplx-embed-v1-0.6b"  # 1024 dimensions, 32K contexte
-    EMBEDDING_DIMENSIONS: int = 1024  # Matryoshka : 128-1024 pour le modèle 0.6b
-    #EMBEDDING_MODEL: str = "openai/text-embedding-3-large"  # repli legacy (OpenAI/OpenRouter)
+    # Embeddings (OpenRouter / OpenAI — texte-embedding-3-small, 1536 dims max)
+    EMBEDDING_MODEL: str = "openai/text-embedding-3-small"
+    EMBEDDING_DIMENSIONS: int = 1536  # max du modèle 3-small (Matryoshka : 1536/512/256)
 
     # Hybrid Search (BM25 sparse + dense) & Reranking (OpenRouter)
+    HYBRID_ALPHA: float = 0.75  # 0=100% BM25, 1=100% dense ; 0.75 = bias sémantique (recommandé Pinecone)
     RERANK_MODEL: str = "cohere/rerank-4-fast"
-    RERANK_CANDIDATES: int = 15  # sur-recuperation avant reranking (retrieve wide, rerank narrow)
-    RERANK_TOP_N: int = 5  # nombre final de chunks injectés dans le prompt
+    RERANK_CANDIDATES: int = 10  # sur-recuperation avant reranking (retrieve wide, rerank narrow)
+    RERANK_TOP_N: int = 3  # nombre final de chunks injectés dans le prompt
 
     # Pinecone Vector DB
     PINECONE_API_KEY: str
-    PINECONE_INDEX: str = "smarttube"  # doit avoir une dimension = EMBEDDING_DIMENSIONS (1024)
+    PINECONE_INDEX: str = "smarttubes"  # doit avoir une dimension = EMBEDDING_DIMENSIONS (1536)
     PINECONE_NAMESPACE_DEFAULT: str = "transcripts"
 
     # Services tiers

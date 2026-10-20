@@ -1,12 +1,13 @@
 """
 Ré-indexe toutes les vidéos PostgreSQL dans Pinecone avec le pipeline actuel
-(Perplexity embeddings + BM25 sparse → hybrid search).
+(text-embedding-3-small + BM25 sparse → hybrid search).
 
-À lancer après tout changement de modèle d'embeddings ou de dimension :
+À lancer après tout changement de modèle d'embeddings, de dimension, ou pour
+ajouter la branche BM25 à des vidéos indexées avant le hybrid search :
     cd back && uv run python scripts/reindex_all.py
 
 Prérequis : l'index Pinecone doit avoir une dimension = EMBEDDING_DIMENSIONS
-(1024 pour pplx-embed-v1-0.6b). Le script vérifie et refuse de tourner sinon.
+(1536 pour text-embedding-3-small). Le script vérifie et refuse de tourner sinon.
 """
 
 import asyncio

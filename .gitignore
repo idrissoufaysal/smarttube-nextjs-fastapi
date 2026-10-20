@@ -57,6 +57,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Agent & OpenCode tools
+.agent/
+.opencode/
+opencode.json
+
+# Médias volumineux
+*.gif
+front/public/*.gif
+
 # Vercel
 .vercel/
 

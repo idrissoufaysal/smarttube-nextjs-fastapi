@@ -1,14 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api-config';
+import { readApiError } from '@/lib/api-errors';
 
 interface UrlModalProps {
   onSuccess?: (url: string, transcript: string) => void;
 }
 
 export function UrlModal({ onSuccess }: UrlModalProps) {
+  const t = useTranslations('modals.urlModal');
+  const te = useTranslations('errors');
   const router = useRouter();
   const [inputUrl, setInputUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,7 +24,7 @@ export function UrlModal({ onSuccess }: UrlModalProps) {
 
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/;
     if (!youtubeRegex.test(inputUrl)) {
-      setError("Veuillez entrer une URL YouTube valide.");
+      setError(te("invalidUrl"));
       return;
     }
 
@@ -33,12 +37,12 @@ export function UrlModal({ onSuccess }: UrlModalProps) {
         body: JSON.stringify({ url: inputUrl }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Impossible d'extraire la transcription.");
+        setError(await readApiError(res, te));
         return;
       }
+
+      const data = await res.json();
 
       sessionStorage.setItem('smarttube_transcript', data.transcript);
       sessionStorage.setItem('smarttube_segments', JSON.stringify(data.segments));
@@ -51,7 +55,7 @@ export function UrlModal({ onSuccess }: UrlModalProps) {
       // Update the URL to trigger the study page load
       router.push(`/study?url=${encodeURIComponent(inputUrl)}`);
     } catch {
-      setError("Erreur réseau. Réessayez.");
+      setError(te("network"));
     } finally {
       setLoading(false);
     }
@@ -59,13 +63,15 @@ export function UrlModal({ onSuccess }: UrlModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-surface-container-lowest/80 backdrop-blur-xl">
-      <div className="w-full max-w-xl bg-[#242323] rounded-2xl p-8 shadow-2xl animate-fade-up">
+      <div className="w-full max-w-xl bg-surface-container rounded-2xl p-8 shadow-2xl border border-border animate-fade-up">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
-            Prêt à <span className="text-primary">maîtriser</span> une vidéo ?
+          <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">
+            {t.rich("title", {
+              hl: (chunks) => <span className="text-primary">{chunks}</span>,
+            })}
           </h2>
           <p className="text-on-surface-variant text-sm">
-            Collez le lien YouTube ci-dessous pour générer votre sanctuaire d'étude.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -74,7 +80,7 @@ export function UrlModal({ onSuccess }: UrlModalProps) {
             <input
               type="text"
               placeholder="https://www.youtube.com/watch?v=..."
-              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface placeholder:text-white/20 focus:outline-none focus:border-primary/50 transition-colors"
+              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface placeholder:text-foreground/30 focus:outline-none focus:border-primary/50 transition-colors"
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
             />
@@ -97,7 +103,7 @@ export function UrlModal({ onSuccess }: UrlModalProps) {
             disabled={loading || !inputUrl.trim()}
             className="w-full bg-linear-to-br from-primary to-primary-container text-on-primary-container py-3 rounded-xl font-bold text-lg hover:brightness-110 transition-all disabled:opacity-50"
           >
-            {loading ? "Extraction..." : "Commencer l'apprentissage"}
+            {loading ? t("extracting") : t("start")}
           </button>
         </form>
       </div>

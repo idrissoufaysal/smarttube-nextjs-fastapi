@@ -1,0 +1,286 @@
+{
+  "common": {
+    "videoFallback": "Vidéo",
+    "theme": {
+      "system": "Thème système",
+      "light": "Mode clair",
+      "dark": "Mode sombre"
+    },
+    "localeSwitcher": {
+      "label": "Langue",
+      "fr": "Afficher en français",
+      "en": "Afficher en anglais"
+    }
+  },
+  "layout": {
+    "title": "SmartTube | Transformez n'importe quelle vidéo en leçon structurée",
+    "description": "Fini le visionnage passif. Place à l'apprentissage actif. Générez instantanément des résumés par IA, des transcriptions interactives et des quiz sur mesure."
+  },
+  "header": {
+    "home": "Accueil",
+    "library": "Ma bibliothèque",
+    "explore": "Explorer",
+    "signIn": "Se connecter",
+    "start": "Commencer",
+    "toggleMenu": "Ouvrir ou fermer le menu"
+  },
+  "landing": {
+    "meta": {
+      "title": "SmartTube | Transformez n'importe quelle vidéo en leçon structurée",
+      "description": "Fini le visionnage passif. Place à l'apprentissage actif. Générez instantanément des résumés par IA, des transcriptions interactives et des quiz sur mesure."
+    },
+    "hero": {
+      "title": "Transformez toutes vidéos en une <hl>leçon structurée.</hl>",
+      "subtitle": "Fini le visionnage passif. Place à l'apprentissage actif. Collez un lien pour générer instantanément des transcriptions, des notes propulsées par l'IA et des quiz personnalisés."
+    },
+    "features": {
+      "label": "Fonctionnalités clés",
+      "title": "Votre boîte à outils d'apprentissage propulsée par l'IA",
+      "f1": {
+        "title": "Décryptage IA",
+        "desc": "Analyse approfondie de sujets complexes, divisés automatiquement en blocs faciles à assimiler."
+      },
+      "f2": {
+        "title": "Notes Intelligentes",
+        "desc": "Annotez les vidéos en temps réel et exportez vos résumés directement vers Notion ou Obsidian."
+      },
+      "f3": {
+        "title": "Mode Quiz",
+        "desc": "Testez vos connaissances grâce à des quiz générés par l'IA et adaptés au contenu de la vidéo."
+      }
+    },
+    "steps": {
+      "label": "Comment ça marche",
+      "title": "Trois étapes vers la maîtrise",
+      "s1": {
+        "title": "Collez un lien",
+        "desc": "Insérez n'importe quelle URL YouTube dans SmartTube. Notre IA commence instantanément à traiter le contenu."
+      },
+      "s2": {
+        "title": "Apprenez activement",
+        "desc": "Obtenez des transcriptions, des points clés et un assistant IA qui répond à toutes vos questions sur la vidéo."
+      },
+      "s3": {
+        "title": "Maîtrisez & Retenez",
+        "desc": "Faites des quiz générés par l'IA, passez en revue les explications et suivez votre progression au fil du temps."
+      }
+    },
+    "stats": {
+      "s1": "Apprenants Actifs",
+      "s2": "Vidéos Analysées",
+      "s3": "Taux de Rétention",
+      "s4": "Note Utilisateurs"
+    },
+    "cta": {
+      "title": "Prêt à apprendre plus <hl>intelligemment ?</hl>",
+      "subtitle": "Rejoignez des milliers d'étudiants qui ont transformé leurs habitudes d'étude avec SmartTube.",
+      "button": "Commencer à apprendre — C'est gratuit"
+    },
+    "footer": {
+      "rights": "© {year} Study Sanctuary Inc. Tous droits réservés.",
+      "privacy": "Confidentialité",
+      "terms": "Conditions d'utilisation",
+      "contact": "Contact"
+    }
+  },
+  "errors": {
+    "invalidUrl": "Veuillez entrer une URL YouTube valide.",
+    "extractFailed": "Impossible d'extraire la transcription.",
+    "network": "Erreur réseau. Réessayez.",
+    "videoLimit": "Limite de vidéos atteinte. Supprimez une vidéo existante pour en ajouter une nouvelle.",
+    "noSubtitles": "Aucun sous-titre exploitable pour cette vidéo ({error}).",
+    "transcriptRequired": "La transcription est requise pour générer des notes.",
+    "videoNotFound": "Vidéo introuvable.",
+    "unauthorized": "Non autorisé. Veuillez vous connecter.",
+    "generic": "Une erreur est survenue. Réessayez."
+  },
+  "study": {
+    "meta": {
+      "title": "SmartTube | Session d'étude",
+      "description": "Étudiez vos vidéos de manière active avec des synthèses par IA, des transcriptions interactives et des quiz personnalisés."
+    },
+    "tabs": {
+      "transcript": "Transcription",
+      "transcriptShort": "Transc.",
+      "notes": "Notes de cours",
+      "notesShort": "Notes",
+      "aiChat": "Chat IA",
+      "quiz": "Quiz"
+    },
+    "videoLoading": "Chargement de la vidéo…",
+    "maxScore": "Score Max : {score}",
+    "searchPlaceholder": "Rechercher dans la transcription…",
+    "timestamps": "Horodatage",
+    "noResults": "Aucun résultat pour cette recherche.",
+    "chatLoading": "Chargement de la transcription...",
+    "generating": {
+      "title": "Génération des notes…",
+      "desc": "L'IA analyse la transcription et structure votre synthèse."
+    },
+    "summary": "Synthèse de la vidéo",
+    "copy": "Copier",
+    "copied": "Copié",
+    "regenerate": "Régénérer",
+    "empty": {
+      "title": "Notes de cours IA",
+      "desc": "L'IA analyse la transcription et rédige une synthèse structurée, claire et exploitable pour vos révisions.",
+      "cta": "Générer les notes"
+    },
+    "noTranscript": {
+      "title": "Aucune transcription disponible",
+      "desc": "Cette vidéo ne dispose pas de transcription exploitable. Essayez une autre vidéo ou vérifiez que les sous-titres sont activés."
+    },
+    "export": {
+      "generatedOn": "Généré le {date} par SmartTube",
+      "transcriptTitle": "Transcription - {title}",
+      "notesTitle": "Notes de Cours - {title}"
+    },
+    "toast": {
+      "notesGenerated": "Notes de cours générées avec succès !",
+      "notesFetched": "Notes de cours récupérées avec succès !"
+    },
+    "panels": {
+      "ai": "AI Assistant",
+      "practice": "Questions pratiques"
+    }
+  },
+  "quiz": {
+    "difficulty": {
+      "facile": {
+        "label": "Facile",
+        "desc": "Bases & repères"
+      },
+      "moyen": {
+        "label": "Moyen",
+        "desc": "Compréhension"
+      },
+      "difficile": {
+        "label": "Difficile",
+        "desc": "Analyse & synthèse"
+      }
+    },
+    "count": {
+      "express": "Express",
+      "standard": "Standard",
+      "full": "Complet",
+      "estimated": "estimées"
+    },
+    "mastery": {
+      "master": "🏆 Maître",
+      "apprentice": "💡 Apprenti",
+      "review": "📖 À revoir"
+    },
+    "setup": {
+      "title": "Questions pratiques",
+      "badge": "IA Active",
+      "subtitle": "Configurez et lancez une session pour valider votre apprentissage.",
+      "difficultyLabel": "Niveau de difficulté",
+      "countLabel": "Nombre de questions",
+      "start": "Lancer le Quiz ({count, plural, one {# question} other {# questions}})"
+    },
+    "history": {
+      "title": "Historique des sessions",
+      "attempts": "{count, plural, =1 {# tentative} other {# tentatives}}",
+      "empty": {
+        "title": "Aucune tentative enregistrée",
+        "desc": "Terminez votre premier quiz pour mesurer votre progression et retrouver vos scores ici."
+      }
+    },
+    "generating": {
+      "title": "Création de votre quiz...",
+      "desc": "L'IA analyse les moments clés pour formuler {count, plural, one {# question} other {# questions}} en niveau <b>{difficulty}</b>."
+    },
+    "finished": {
+      "newQuiz": "Nouveau Quiz",
+      "settings": "Changer les réglages",
+      "good": "Excellente maîtrise ! Vous avez retenu l'essentiel du cours.",
+      "medium": "Bonne assimilation globale. Révisez les points manqués dans les notes.",
+      "bad": "N'hésitez pas à revoir la vidéo ou poser des questions à l'assistant IA."
+    },
+    "active": {
+      "progress": "Question {current} sur {total}",
+      "points": "{score} pts",
+      "validate": "Valider la réponse",
+      "correct": "Réponse correcte !",
+      "explanation": "Explication",
+      "next": "Question suivante",
+      "results": "Voir mes résultats"
+    },
+    "errors": {
+      "generation": "Erreur lors de la génération du quiz",
+      "invalidFormat": "Format de quiz invalide reçu",
+      "unexpected": "Une erreur inattendue est survenue."
+    }
+  },
+  "chat": {
+    "greeting": "Bonjour ! Je suis SmartTube AI.",
+    "greetingSub": "Posez-moi des questions sur cette vidéo.",
+    "placeholder": "Posez une question sur cette vidéo...",
+    "pressEnter": "Appuyez sur Entrée pour envoyer",
+    "sourceToast": "Navigation vers la source [{label}]"
+  },
+  "library": {
+    "meta": {
+      "title": "SmartTube | Ma bibliothèque",
+      "description": "Retrouvez toutes vos vidéos transformées en sessions d'étude actives."
+    },
+    "label": "Votre collection",
+    "title": "Ma Bibliothèque",
+    "subtitle": "Toutes les vidéos transformées en sessions d'étude actives.",
+    "usage": "Usage gratuit",
+    "maximum": "Maximum",
+    "stats": {
+      "videos": "Vidéos",
+      "segments": "Segments",
+      "quiz": "Quiz"
+    },
+    "db": {
+      "title": "Base de données non configurée",
+      "desc": "Ajoutez votre variable <dsn>DATABASE_URL</dsn> dans le fichier <env>.env</env> pour activer votre bibliothèque personnelle."
+    },
+    "empty": {
+      "title": "Votre bibliothèque est vide",
+      "desc": "Vous n'avez pas encore étudié de vidéo. Collez un lien YouTube pour démarrer."
+    },
+    "card": {
+      "mastered": "🏆 MAÎTRISÉ",
+      "learned": "💡 APPRIS",
+      "notAttempted": "📖 NON TENTÉ",
+      "attempts": "{count, plural, one {# quiz} other {# quiz}}",
+      "segments": "{count} segments"
+    }
+  },
+  "modals": {
+    "urlInput": {
+      "placeholder": "Collez un lien YouTube...",
+      "extracting": "Extraction...",
+      "start": "Commencer"
+    },
+    "urlModal": {
+      "title": "Prêt à <hl>maîtriser</hl> une vidéo ?",
+      "subtitle": "Collez le lien YouTube ci-dessous pour générer votre sanctuaire d'étude.",
+      "extracting": "Extraction...",
+      "start": "Commencer l'apprentissage"
+    },
+    "addVideo": {
+      "title": "Débloquez votre session d'étude",
+      "subtitle": "Collez un lien YouTube pour générer votre transcription, votre résumé et vos questions de pratique.",
+      "extracting": "EXTRACTION...",
+      "start": "COMMENCER",
+      "close": "Fermer"
+    },
+    "addButton": {
+      "label": "Ajouter une vidéo",
+      "title": "Ajouter une nouvelle vidéo à la bibliothèque",
+      "first": "Étudier ma première vidéo"
+    },
+    "delete": {
+      "aria": "Supprimer la vidéo",
+      "title": "Supprimer la vidéo ?",
+      "description": "Cette action supprimera la vidéo, sa transcription, ses notes et tout l'historique de quiz. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "deleting": "Suppression…",
+      "delete": "Supprimer"
+    }
+  }
+}

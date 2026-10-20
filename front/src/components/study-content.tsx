@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useCompletion } from '@ai-sdk/react';
 import type { MediaPlayerInstance } from '@vidstack/react';
 import { UrlModal } from '@/components/url-modal';
@@ -13,6 +14,9 @@ import { toast } from 'sonner';
 import { API_BASE_URL } from '@/lib/api-config';
 
 export function StudyContent() {
+  const t = useTranslations('study');
+  const tc = useTranslations('common');
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const url = searchParams.get('url') || '';
@@ -59,10 +63,11 @@ export function StudyContent() {
     body: {
       videoId,
       transcript,
+      locale,
     },
     onFinish: (_, resultText) => {
       setNotes(resultText);
-      toast.success("Notes de cours générées avec succès !");
+      toast.success(t('toast.notesGenerated'));
     },
   });
 

@@ -2,11 +2,21 @@ import { Suspense } from 'react';
 import { StudyContent } from '@/components/study-content';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: "SmartTube | Session d'étude",
-  description: "Étudiez vos vidéos de manière active avec des synthèses par IA, des transcriptions interactives et des quiz personnalisés.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'study.meta' });
+
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
 
 function StudyPageSkeleton() {
   return (
@@ -27,9 +37,9 @@ function StudyPageSkeleton() {
           </div>
 
           {/* Tabs card skeleton */}
-          <div className="rounded-2xl border border-white/[0.05] bg-surface-dim/80 overflow-hidden">
+          <div className="rounded-2xl border border-foreground/[0.05] bg-surface-dim/80 overflow-hidden">
             {/* Tab headers */}
-            <div className="flex items-center border-b border-white/[0.05] bg-surface-low/50 px-4 pt-3 gap-1">
+            <div className="flex items-center border-b border-foreground/[0.05] bg-surface-low/50 px-4 pt-3 gap-1">
               <Skeleton className="h-9 w-28 rounded-t-lg" />
               <Skeleton className="h-9 w-28 rounded-t-lg" />
             </div>

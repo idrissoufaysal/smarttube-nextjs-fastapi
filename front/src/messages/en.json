@@ -1,0 +1,286 @@
+{
+  "common": {
+    "videoFallback": "Video",
+    "theme": {
+      "system": "System theme",
+      "light": "Light mode",
+      "dark": "Dark mode"
+    },
+    "localeSwitcher": {
+      "label": "Language",
+      "fr": "View in French",
+      "en": "View in English"
+    }
+  },
+  "layout": {
+    "title": "SmartTube | Turn any video into a structured lesson",
+    "description": "Stop passive watching. Start active mastery. Instantly generate AI summaries, interactive transcripts and custom quizzes."
+  },
+  "header": {
+    "home": "Home",
+    "library": "My Library",
+    "explore": "Explore",
+    "signIn": "Sign in",
+    "start": "Get started",
+    "toggleMenu": "Toggle menu"
+  },
+  "landing": {
+    "meta": {
+      "title": "SmartTube | Turn any video into a structured lesson",
+      "description": "Stop passive watching. Start active mastery. Instantly generate AI summaries, interactive transcripts and custom quizzes."
+    },
+    "hero": {
+      "title": "Turn every video into a <hl>structured lesson.</hl>",
+      "subtitle": "Stop passive watching. Start learning actively. Paste a link to instantly generate transcripts, AI-powered notes and personalized quizzes."
+    },
+    "features": {
+      "label": "Key features",
+      "title": "Your AI-powered learning toolkit",
+      "f1": {
+        "title": "AI Breakdown",
+        "desc": "Deep analysis of complex topics, automatically split into easy-to-digest blocks."
+      },
+      "f2": {
+        "title": "Smart Notes",
+        "desc": "Annotate videos in real time and export your summaries straight to Notion or Obsidian."
+      },
+      "f3": {
+        "title": "Quiz Mode",
+        "desc": "Test your knowledge with AI-generated quizzes tailored to the video content."
+      }
+    },
+    "steps": {
+      "label": "How it works",
+      "title": "Three steps to mastery",
+      "s1": {
+        "title": "Paste a link",
+        "desc": "Drop any YouTube URL into SmartTube. Our AI starts processing the content instantly."
+      },
+      "s2": {
+        "title": "Learn actively",
+        "desc": "Get transcripts, key takeaways and an AI assistant that answers all your questions about the video."
+      },
+      "s3": {
+        "title": "Master & Remember",
+        "desc": "Take AI-generated quizzes, review the explanations and track your progress over time."
+      }
+    },
+    "stats": {
+      "s1": "Active Learners",
+      "s2": "Videos Analyzed",
+      "s3": "Retention Rate",
+      "s4": "User Rating"
+    },
+    "cta": {
+      "title": "Ready to learn <hl>smarter?</hl>",
+      "subtitle": "Join thousands of students who have transformed their study habits with SmartTube.",
+      "button": "Start learning — It's free"
+    },
+    "footer": {
+      "rights": "© {year} Study Sanctuary Inc. All rights reserved.",
+      "privacy": "Privacy",
+      "terms": "Terms of use",
+      "contact": "Contact"
+    }
+  },
+  "errors": {
+    "invalidUrl": "Please enter a valid YouTube URL.",
+    "extractFailed": "Could not extract the transcript.",
+    "network": "Network error. Please try again.",
+    "videoLimit": "Video limit reached. Delete an existing video to add a new one.",
+    "noSubtitles": "No usable subtitles found for this video ({error}).",
+    "transcriptRequired": "A transcript is required to generate notes.",
+    "videoNotFound": "Video not found.",
+    "unauthorized": "Not authorized. Please sign in.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "study": {
+    "meta": {
+      "title": "SmartTube | Study session",
+      "description": "Study your videos actively with AI summaries, interactive transcripts and personalized quizzes."
+    },
+    "tabs": {
+      "transcript": "Transcript",
+      "transcriptShort": "Transc.",
+      "notes": "Course notes",
+      "notesShort": "Notes",
+      "aiChat": "AI chat",
+      "quiz": "Quiz"
+    },
+    "videoLoading": "Loading video…",
+    "maxScore": "Best score: {score}",
+    "searchPlaceholder": "Search the transcript…",
+    "timestamps": "Timestamps",
+    "noResults": "No results for this search.",
+    "chatLoading": "Loading transcript...",
+    "generating": {
+      "title": "Generating notes…",
+      "desc": "AI is analyzing the transcript and structuring your summary."
+    },
+    "summary": "Video summary",
+    "copy": "Copy",
+    "copied": "Copied",
+    "regenerate": "Regenerate",
+    "empty": {
+      "title": "AI course notes",
+      "desc": "AI analyzes the transcript and writes a structured, clear summary you can actually revise from.",
+      "cta": "Generate notes"
+    },
+    "noTranscript": {
+      "title": "No transcript available",
+      "desc": "This video has no usable transcript. Try another video or check that subtitles are enabled."
+    },
+    "export": {
+      "generatedOn": "Generated on {date} by SmartTube",
+      "transcriptTitle": "Transcript - {title}",
+      "notesTitle": "Course Notes - {title}"
+    },
+    "toast": {
+      "notesGenerated": "Course notes generated!",
+      "notesFetched": "Course notes loaded!"
+    },
+    "panels": {
+      "ai": "AI Assistant",
+      "practice": "Practice Questions"
+    }
+  },
+  "quiz": {
+    "difficulty": {
+      "facile": {
+        "label": "Easy",
+        "desc": "Basics & key facts"
+      },
+      "moyen": {
+        "label": "Medium",
+        "desc": "Comprehension"
+      },
+      "difficile": {
+        "label": "Hard",
+        "desc": "Analysis & synthesis"
+      }
+    },
+    "count": {
+      "express": "Express",
+      "standard": "Standard",
+      "full": "Full",
+      "estimated": "estimated"
+    },
+    "mastery": {
+      "master": "🏆 Master",
+      "apprentice": "💡 Apprentice",
+      "review": "📖 Review"
+    },
+    "setup": {
+      "title": "Practice Questions",
+      "badge": "AI Active",
+      "subtitle": "Configure and launch a session to check your understanding.",
+      "difficultyLabel": "Difficulty level",
+      "countLabel": "Number of questions",
+      "start": "Start the quiz ({count, plural, one {# question} other {# questions}})"
+    },
+    "history": {
+      "title": "Session history",
+      "attempts": "{count, plural, =1 {# attempt} other {# attempts}}",
+      "empty": {
+        "title": "No attempts recorded",
+        "desc": "Finish your first quiz to track your progress and find your scores here."
+      }
+    },
+    "generating": {
+      "title": "Building your quiz...",
+      "desc": "AI is analyzing the key moments to write {count, plural, one {# question} other {# questions}} at <b>{difficulty}</b> difficulty."
+    },
+    "finished": {
+      "newQuiz": "New quiz",
+      "settings": "Change settings",
+      "good": "Excellent mastery! You've retained the essentials of the lesson.",
+      "medium": "Good overall grasp. Review the points you missed in the notes.",
+      "bad": "Feel free to rewatch the video or ask the AI assistant questions."
+    },
+    "active": {
+      "progress": "Question {current} of {total}",
+      "points": "{score} pts",
+      "validate": "Check answer",
+      "correct": "Correct answer!",
+      "explanation": "Explanation",
+      "next": "Next question",
+      "results": "See my results"
+    },
+    "errors": {
+      "generation": "Error while generating the quiz",
+      "invalidFormat": "Invalid quiz format received",
+      "unexpected": "Something unexpected went wrong."
+    }
+  },
+  "chat": {
+    "greeting": "Hi! I'm SmartTube AI.",
+    "greetingSub": "Ask me anything about this video.",
+    "placeholder": "Ask a question about this video...",
+    "pressEnter": "Press Enter to send",
+    "sourceToast": "Jumping to source [{label}]"
+  },
+  "library": {
+    "meta": {
+      "title": "SmartTube | My library",
+      "description": "Find all your videos turned into active study sessions."
+    },
+    "label": "Your collection",
+    "title": "My Library",
+    "subtitle": "Every video you've turned into an active study session.",
+    "usage": "Free plan",
+    "maximum": "Maximum",
+    "stats": {
+      "videos": "Videos",
+      "segments": "Segments",
+      "quiz": "Quiz"
+    },
+    "db": {
+      "title": "Database not configured",
+      "desc": "Add your <dsn>DATABASE_URL</dsn> variable in the <env>.env</env> file to enable your personal library."
+    },
+    "empty": {
+      "title": "Your library is empty",
+      "desc": "You haven't studied any video yet. Paste a YouTube link to get started."
+    },
+    "card": {
+      "mastered": "🏆 MASTERED",
+      "learned": "💡 LEARNED",
+      "notAttempted": "📖 NOT ATTEMPTED",
+      "attempts": "{count, plural, one {# quiz} other {# quizzes}}",
+      "segments": "{count} segments"
+    }
+  },
+  "modals": {
+    "urlInput": {
+      "placeholder": "Paste a YouTube link...",
+      "extracting": "Extracting...",
+      "start": "Get started"
+    },
+    "urlModal": {
+      "title": "Ready to <hl>master</hl> a video?",
+      "subtitle": "Paste the YouTube link below to generate your study sanctuary.",
+      "extracting": "Extracting...",
+      "start": "Start learning"
+    },
+    "addVideo": {
+      "title": "Unlock your study session",
+      "subtitle": "Paste a YouTube link to generate your transcript, summary and practice questions.",
+      "extracting": "EXTRACTION...",
+      "start": "GET STARTED",
+      "close": "Close"
+    },
+    "addButton": {
+      "label": "Add a video",
+      "title": "Add a new video to your library",
+      "first": "Study my first video"
+    },
+    "delete": {
+      "aria": "Delete video",
+      "title": "Delete video?",
+      "description": "This will delete the video, its transcript, notes and quiz history. This action is irreversible.",
+      "cancel": "Cancel",
+      "deleting": "Deleting…",
+      "delete": "Delete"
+    }
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, UIMessage } from 'ai';
+import { useLocale, useTranslations } from 'next-intl';
 import { BrainCircuit,ArrowUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,8 @@ function ChatInterfaceInner({
   onTimelineClick?: (seconds: number) => void,
   initialMessages: UIMessage[]
 }) {
+  const t = useTranslations('chat');
+  const locale = useLocale();
   const [input, setInput] = useState('');
 
   const renderMessageContent = (text: string) => {
@@ -108,7 +111,7 @@ function ChatInterfaceInner({
       parts.push(
         <button
           key={match.index}
-          onClick={() => { onTimelineClick?.(totalSeconds); toast.success(`Navigation vers la source [${label}]`); }}
+          onClick={() => { onTimelineClick?.(totalSeconds); toast.success(t('sourceToast', { label })); }}
           className="inline-flex items-center gap-1.5 px-2.5 py-1 my-1 mx-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary hover:bg-primary/20 active:scale-95 transition-all cursor-pointer inline-block"
           type="button"
         >
@@ -131,7 +134,7 @@ function ChatInterfaceInner({
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: API_BASE_URL+'/chat',
-      body: { transcript, videoId },
+      body: { transcript, videoId, locale },
     })
   });
 
@@ -194,8 +197,8 @@ function ChatInterfaceInner({
               <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}><BrainCircuit/> </span>
             </div>
             <p className="text-sm text-center font-medium leading-relaxed">
-              Bonjour ! Je suis SmartTube AI.<br />
-              <span className="text-xs text-neutral-500 font-normal">Posez-moi des questions sur cette vidéo.</span>
+              {t('greeting')}<br />
+              <span className="text-xs text-muted-foreground font-normal">{t('greetingSub')}</span>
             </p>
           </div>
         ) : (
@@ -272,10 +275,10 @@ function ChatInterfaceInner({
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Ask a question about this video..."
+              placeholder={t('placeholder')}
               disabled={isLoading}
               rows={2}
-              className="w-full bg-surface-container rounded-2xl p-4 pr-12 text-sm text-on-surface placeholder:text-neutral-500 border border-outline-variant/10 focus:border-none resize-none transition-all outline-none min-h-16"
+              className="w-full bg-surface-container rounded-2xl p-4 pr-12 text-sm text-on-surface placeholder:text-muted-foreground/70 border border-outline-variant/10 focus:border-none resize-none transition-all outline-none min-h-16"
             />
             <Button
               type="submit"
@@ -288,11 +291,11 @@ function ChatInterfaceInner({
           </div>
           <div className="mt-3 flex items-center justify-between">
           {input.length >200 &&  <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-medium transition-colors ${input.length > 900 ? 'text-amber-500 font-bold' : 'text-neutral-500'}`}>
+              <span className={`text-[10px] font-medium transition-colors ${input.length > 900 ? 'text-amber-500 font-bold' : 'text-muted-foreground'}`}>
                 {input.length} / 1000
               </span>
             </div>}
-            <span className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest">Press Enter to send</span>
+            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{t('pressEnter')}</span>
           </div>
         </form>
       </div>

@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { API_BASE_URL } from '@/lib/api-config';
+import { readApiError } from '@/lib/api-errors';
 
 export function UrlInput() {
+  const t = useTranslations('modals.urlInput');
+  const te = useTranslations('errors');
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,7 +20,7 @@ export function UrlInput() {
 
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]+/;
     if (!youtubeRegex.test(url)) {
-      setError("Veuillez entrer une URL YouTube valide.");
+      setError(te("invalidUrl"));
       return;
     }
 
@@ -29,12 +33,12 @@ export function UrlInput() {
         body: JSON.stringify({ url }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Impossible d'extraire la transcription.");
+        setError(await readApiError(res, te));
         return;
       }
+
+      const data = await res.json();
 
       // sessionStorage évite la limite de longueur d'URL
       sessionStorage.setItem('smarttube_transcript', data.transcript);
@@ -42,7 +46,7 @@ export function UrlInput() {
       sessionStorage.setItem('smarttube_url', url);
       router.push(`/study?url=${encodeURIComponent(url)}`);
     } catch {
-      setError("Erreur réseau. Réessayez.");
+      setError(te("network"));
     } finally {
       setLoading(false);
     }
@@ -52,8 +56,8 @@ export function UrlInput() {
     <form onSubmit={handleSubmit} className="w-full max-w-3xl mt-8 mx-auto">
       <div className="h-auto md:h-15 bg-surface-container/50 backdrop-blur-lg p-2 rounded-lg border border-outline-variant/10 shadow-2xl flex flex-col md:flex-row gap-2">
         <input
-          className="bg-transparent border-none w-full px-6 py-3 md:py-0 text-on-surface focus:ring-0 text-lg placeholder:text-neutral-600"
-          placeholder="Collez un lien YouTube..."
+          className="bg-transparent border-none w-full px-6 py-3 md:py-0 text-on-surface focus:ring-0 text-lg placeholder:text-muted-foreground/70"
+          placeholder={t("placeholder")}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
@@ -68,10 +72,10 @@ export function UrlInput() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Extraction...
+              {t("extracting")}
             </span>
           ) : (
-            "Commencer"
+            t("start")
           )}
         </button>
       </div>

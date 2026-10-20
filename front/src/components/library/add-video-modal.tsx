@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { Zap, X, Link, ArrowRight } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-config';
+import { readApiError } from '@/lib/api-errors';
 
 interface AddVideoModalProps {
   isOpen: boolean;
@@ -12,6 +14,8 @@ interface AddVideoModalProps {
 }
 
 export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
+  const t = useTranslations('modals.addVideo');
+  const te = useTranslations('errors');
   const router = useRouter();
   const [inputUrl, setInputUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +27,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
 
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)[\w-]+/;
     if (!youtubeRegex.test(inputUrl)) {
-      setError("Veuillez entrer une URL YouTube valide.");
+      setError(te("invalidUrl"));
       return;
     }
 
@@ -36,12 +40,12 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
         body: JSON.stringify({ url: inputUrl }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Impossible d'extraire la transcription.");
+        setError(await readApiError(res, te));
         return;
       }
+
+      const data = await res.json();
 
       sessionStorage.setItem('smarttube_transcript', data.transcript);
       sessionStorage.setItem('smarttube_segments', JSON.stringify(data.segments));
@@ -50,8 +54,8 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
       onClose();
       // Redirect to trigger study page load
       router.push(`/study?url=${encodeURIComponent(inputUrl)}`);
-    } catch (err) {
-      setError("Erreur réseau. Réessayez.");
+    } catch {
+      setError(te("network"));
     } finally {
       setLoading(false);
     }
@@ -79,8 +83,8 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
               <button 
                 onClick={onClose}
                 type="button"
-                className="absolute top-4 right-4 sm:top-6 sm:right-6 text-zinc-500 hover:text-on-surface transition-colors cursor-pointer focus:outline-none p-1.5 rounded-lg hover:bg-white/5"
-                aria-label="Close"
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 text-muted-foreground hover:text-on-surface transition-colors cursor-pointer focus:outline-none p-1.5 rounded-lg hover:bg-foreground/5"
+                aria-label={t('close')}
               >
                 <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -91,22 +95,22 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-container flex items-center justify-center rounded-2xl mb-1 sm:mb-2 shadow-lg shadow-primary-container/20">
                   <Zap className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-on-primary-container fill-on-primary-container" />
                 </div>
-                <h2 className="text-2xl sm:text-4xl font-black tracking-tighter text-on-surface">
-                  Débloquez votre session d'étude
-                </h2>
-                <p className="text-zinc-400 text-sm sm:text-lg leading-relaxed max-w-lg">
-                  Collez un lien YouTube pour générer votre transcription, votre résumé et vos questions de pratique.
-                </p>
+                <DialogPrimitive.Title className="text-2xl sm:text-4xl font-black tracking-tighter text-on-surface">
+                  {t('title')}
+                </DialogPrimitive.Title>
+                <DialogPrimitive.Description className="text-muted-foreground text-sm sm:text-lg leading-relaxed max-w-lg">
+                  {t('subtitle')}
+                </DialogPrimitive.Description>
               </div>
 
               <form onSubmit={handleUrlSubmit} className="space-y-3 sm:space-y-5">
                 {/* Input Group */}
                 <div className="relative group">
                   <div className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                    <Link className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-zinc-500 group-focus-within:text-primary transition-colors" />
+                    <Link className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   </div>
                   <input 
-                    className="w-full bg-surface-container border-0 outline-none ring-1 ring-outline-variant/20 focus:ring-primary/40 focus:bg-surface-container transition-all rounded-2xl py-4 sm:py-6 pl-12 sm:pl-14 pr-12 text-on-surface placeholder:text-zinc-600 font-medium text-sm sm:text-base" 
+                    className="w-full bg-surface-container border-0 outline-none ring-1 ring-outline-variant/20 focus:ring-primary/40 focus:bg-surface-container transition-all rounded-2xl py-4 sm:py-6 pl-12 sm:pl-14 pr-12 text-on-surface placeholder:text-muted-foreground/60 font-medium text-sm sm:text-base" 
                     placeholder="https://youtube.com/watch?v=..." 
                     type="text"
                     value={inputUrl}
@@ -135,7 +139,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-container transition-transform duration-300 group-hover:scale-105"></div>
                   <div className="relative flex items-center justify-center gap-3 text-on-primary-container font-black text-xs sm:text-sm tracking-[0.2em]">
-                    <span>{loading ? "EXTRACTION..." : "COMMENCER"}</span>
+                    <span>{loading ? t('extracting') : t('start')}</span>
                     {!loading && <ArrowRight className="w-4.5 h-4.5 sm:w-5 sm:h-5" />}
                   </div>
                 </button>

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { Trash2, Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -14,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { API_BASE_URL } from '@/lib/api-config';
+import { readApiError } from '@/lib/api-errors';
 
 interface DeleteVideoButtonProps {
   videoId: string;
@@ -21,6 +24,8 @@ interface DeleteVideoButtonProps {
 }
 
 export function DeleteVideoButton({ videoId, videoTitle }: DeleteVideoButtonProps) {
+  const t = useTranslations('modals.delete');
+  const te = useTranslations('errors');
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -32,9 +37,12 @@ export function DeleteVideoButton({ videoId, videoTitle }: DeleteVideoButtonProp
       if (res.ok) {
         setOpen(false);
         router.refresh(); // Re-fetch Server Component data
+      } else {
+        toast.error(await readApiError(res, te));
       }
     } catch (e) {
       console.error('Erreur suppression:', e);
+      toast.error(te('network'));
     } finally {
       setIsDeleting(false);
     }
@@ -59,14 +67,14 @@ export function DeleteVideoButton({ videoId, videoTitle }: DeleteVideoButtonProp
             lg:opacity-0 lg:group-hover:opacity-100
             lg:scale-90 lg:group-hover:scale-100
           "
-          aria-label="Supprimer la vidéo"
-          title="Supprimer"
+          aria-label={t('aria')}
+          title={t('delete')}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </DialogTrigger>
 
-      <DialogContent className="bg-surface-dim border border-white/[0.06] text-on-surface max-w-sm rounded-2xl shadow-2xl shadow-black/60 p-0 overflow-hidden">
+      <DialogContent className="bg-surface-dim border border-foreground/[0.06] text-on-surface max-w-sm rounded-2xl shadow-2xl shadow-black/60 p-0 overflow-hidden">
         {/* Top accent line */}
         <div className="h-0.5 w-full bg-gradient-to-r from-red-500/0 via-red-500/60 to-red-500/0" />
 
@@ -77,12 +85,12 @@ export function DeleteVideoButton({ videoId, videoTitle }: DeleteVideoButtonProp
               <Trash2 className="w-5 h-5 text-red-400" />
             </div>
             <DialogTitle className="text-base font-bold text-on-surface text-center">
-              Supprimer la vidéo ?
+              {t('title')}
             </DialogTitle>
             <DialogDescription className="text-xs text-on-surface/45 text-center leading-relaxed">
               <span className="font-semibold text-on-surface/70 line-clamp-1">&ldquo;{videoTitle}&rdquo;</span>
               <br />
-              Cette action supprimera la vidéo, sa transcription, ses notes et tout l'historique de quiz. Cette action est irréversible.
+              {t('description')}
             </DialogDescription>
           </DialogHeader>
 
@@ -91,9 +99,9 @@ export function DeleteVideoButton({ videoId, videoTitle }: DeleteVideoButtonProp
               variant="ghost"
               onClick={() => setOpen(false)}
               disabled={isDeleting}
-              className="flex-1 h-9 rounded-xl text-sm font-medium border border-white/[0.06] text-on-surface/50 hover:text-on-surface hover:bg-white/[0.04]"
+              className="flex-1 h-9 rounded-xl text-sm font-medium border border-foreground/[0.06] text-on-surface/50 hover:text-on-surface hover:bg-foreground/[0.04]"
             >
-              Annuler
+              {t('cancel')}
             </Button>
             <Button
               onClick={handleDelete}
@@ -101,9 +109,9 @@ export function DeleteVideoButton({ videoId, videoTitle }: DeleteVideoButtonProp
               className="flex-1 h-9 rounded-xl text-sm font-semibold bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 hover:text-red-300 gap-2 transition-all"
             >
               {isDeleting ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Suppression…</>
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('deleting')}</>
               ) : (
-                <><Trash2 className="w-3.5 h-3.5" /> Supprimer</>
+                <><Trash2 className="w-3.5 h-3.5" /> {t('delete')}</>
               )}
             </Button>
           </DialogFooter>
