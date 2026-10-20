@@ -1,209 +1,198 @@
-# 🎬 SmartTube — Monorepo (Next.js & FastAPI)
+# 🎬 SmartTube — Monorepo (Next.js 16 & FastAPI)
 
-SmartTube est une plateforme moderne permettant d'interagir intelligemment avec des vidéos YouTube grâce à l'Intelligence Artificielle (RAG - *Retrieval-Augmented Generation*, transcription automatique, recherche sémantique vectorielle et chat en direct).
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/Next.js-16.3-black?style=for-the-badge&logo=next.js)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Pinecone](https://img.shields.io/badge/Pinecone-Vector_DB-000000?style=for-the-badge)
+![Clerk](https://img.shields.io/badge/Clerk-Auth-6C47FF?style=for-the-badge&logo=clerk&logoColor=white)
+
+**Transformez n'importe quelle vidéo YouTube en espace d'apprentissage interactif.**  
+Notes synthétiques intelligentes, quiz interactifs de révision et chat IA sémantique avec navigation par horodatage.
+
+[Fonctionnalités](#-fonctionnalités) • [Architecture](#-architecture) • [Démarrage Rapide](#-démarrage-rapide) • [Variables d'Environnement](#-variables-denvironnement) • [Déploiement](#-guide-de-déploiement-production)
+
+</div>
+
+---
+
+## ✨ Fonctionnalités
+
+- 🎯 **Extraction & Transcription Automatique** : Récupération instantanée des transcripts de vidéos YouTube via `youtubei.js` et service de fallback `Supadata`.
+- 🧠 **RAG Hybride Avancé (Retrieval-Augmented Generation)** :
+  - Recherche hybride combinant la sémantique vectorielle dense (modèle `openai/text-embedding-3-small` en 1536 dimensions) et mots-clés BM25 sur **Pinecone Serverless**.
+  - Reranking intelligent via **Cohere Rerank** (`cohere/rerank-4-fast`) pour garantir des sources ultra-précises dans le contexte du LLM.
+- 📝 **Fiches de Révision Structurées** : Synthèse par sections claires avec définitions clés, formules et concepts essentiels.
+- ❓ **Quiz Interactifs & Scoring** : Évaluation immédiate de la compréhension avec explications détaillées et suivi du score.
+- 💬 **Chat Vidéo avec Timestamps Cliquables** : Posez n'importe quelle question sur la vidéo ; l'IA cite directement les passages avec des liens interactifs qui positionnent le lecteur au moment exact.
+- 🌐 **Internationalisation (i18n)** : Support complet multilingue Français / Anglais avec détection automatique de la langue.
+- 🌓 **Mode Sombre & Clair** : Thème soigné et adaptatif propulsé par Tailwind CSS et Shadcn UI.
+- 🐳 **Dockerisé** : Backend prêt pour la production avec Docker multi-stage et healthcheck automatisé.
 
 ---
 
 ## 🏗️ Architecture du Projet
 
-Le projet est structuré sous forme de **monorepo** contenant deux applications distinctes :
+Le projet est structuré sous forme de monorepo découplé :
 
 ```text
 smarttube/
-├── back/                    # 🐍 Backend Python (FastAPI, LangChain, Pinecone, RAG)
+├── back/                    # 🐍 Backend FastAPI & Pipeline IA
 │   ├── app/
-│   │   ├── api/             # Routes de l'API REST (/api/chat, /api/videos, etc.)
-│   │   ├── config/          # Configuration & variables d'environnement
-│   │   ├── models/          # Modèles SQLAlchemy
-│   │   └── services/        # Logique RAG, Pinecone, Transcriptions, Langfuse
-│   ├── pyproject.toml       # Dépendances Python / uv
-│   ├── requirements.txt     # Dépendances pour Render / Docker / pip
-│   └── .env.example         # Template des variables d'environnement backend
+│   │   ├── api/routes/      # Endpoints REST (/api/chat, /api/videos, /api/study)
+│   │   ├── config/          # Pydantic Settings & validation des configs
+│   │   ├── models/          # Modèles SQLAlchemy (User, Video, Segment, Quiz)
+│   │   └── services/        # Services RAG, Pinecone, LLM, Embeddings & Reranker
+│   ├── Dockerfile           # Image Docker optimisée pour la production
+│   ├── docker-compose.yml   # Lancement local immédiat du backend
+│   ├── pyproject.toml       # Spécification moderne des dépendances Python
+│   ├── requirements.txt     # Dépendances pip pour Docker et cloud providers
+│   └── .env.example         # Template commenté pour le backend
 │
-├── front/                   # ⚡ Frontend Next.js 16 (React 19, TypeScript, Tailwind)
-│   ├── prisma/              # Schéma de base de données (Prisma ORM)
-│   ├── public/              # Fichiers statiques & médias
+├── front/                   # ⚡ Frontend Next.js 16 (Turbopack, App Router)
+│   ├── public/              # Vidéo démo optimisée (smarttube.mp4), logos et médias
 │   ├── src/
-│   │   ├── app/             # App Router Next.js (pages & routes)
-│   │   └── components/      # Composants UI (Shadcn UI, Vidstack player)
-│   ├── package.json         # Dépendances et scripts Node.js
-│   └── .env.example         # Template des variables d'environnement frontend
+│   │   ├── app/[locale]/    # Routes localisées Next-Intl (/, /study, /library)
+│   │   ├── components/      # Composants UI React 19 (Player, Chat, Quiz, Thème)
+│   │   ├── i18n/            # Configuration de routage et détection des langues
+│   │   └── messages/        # Dictionnaires de traduction (fr.json, en.json)
+│   ├── package.json         # Scripts et dépendances frontend
+│   └── .env.example         # Template commenté pour le frontend
 │
-├── .gitignore               # Configuration globale Git (protège les secrets)
-└── README.md                # Documentation principale
+├── .env.example             # Guide global des variables d'environnement
+├── .gitignore               # Protection stricte contre les fuites de secrets/médias lourds
+└── README.md                # Documentation complète
 ```
 
 ---
 
-## 🚀 Prérequis
+## 🚀 Démarrage Rapide
 
-Avant de commencer, assurez-vous d'avoir installé sur votre machine :
-- **Node.js** (v20 ou supérieur) & **npm**
-- **Python** (v3.12 ou supérieur)
-- **Git**
-- Une base de données **PostgreSQL** (ex: Supabase, Neon, Insforge ou local)
-- Un compte & des clés d'API pour :
-  - [Clerk](https://clerk.com) (Authentification)
-  - [Pinecone](https://www.pinecone.io) (Base de données vectorielle)
-  - [OpenRouter](https://openrouter.ai) ou [OpenAI](https://platform.openai.com) (Modèles LLM et embeddings)
+### Prérequis
+- [Node.js](https://nodejs.org) (v20+)
+- [Python](https://python.org) (v3.12+) ou [Docker](https://www.docker.com)
+- Une base de données PostgreSQL en ligne ([Neon Cloud](https://neon.tech) recommandé)
+- Clés d'API : [Clerk](https://clerk.com), [Pinecone](https://www.pinecone.io) et [Google AI Studio](https://aistudio.google.com/) ou [OpenRouter](https://openrouter.ai/)
 
 ---
 
-## 💻 Installation & Démarrage en Local
-
-### 1. Cloner le projet
+### 1. Cloner le Dépôt
 
 ```bash
-git clone https://github.com/<votre-nom-utilisateur>/<nom-du-repo>.git
-cd smarttube
+git clone https://github.com/<votre-compte>/smarttube-nextjs-fastapi.git
+cd smarttube-nextjs-fastapi
 ```
 
 ---
 
 ### 2. Démarrer le Backend (`back`)
 
-1. Ouvrez un terminal dans le dossier `back` :
-   ```bash
-   cd back
-   ```
+#### Option A : Avec Docker (Recommandé - En 1 commande)
 
-2. Créez et activez un environnement virtuel Python :
-   - **Windows (PowerShell) :**
-     ```powershell
-     python -m venv .venv
-     .venv\Scripts\Activate.ps1
-     ```
-   - **macOS / Linux :**
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
+```bash
+cd back
+cp .env.example .env
+# Remplissez vos clés dans back/.env
 
-3. Installez les dépendances :
-   ```bash
-   pip install -r requirements.txt
-   ```
-   *(ou avec `uv` si installé : `uv sync`)*
+docker compose up -d
+```
+Le backend est immédiatement accessible sur `http://localhost:8000`.
 
-4. Configurez vos variables d'environnement :
-   - Copiez `.env.example` vers `.env` :
-     ```bash
-     cp .env.example .env     # Linux/macOS
-     copy .env.example .env   # Windows
-     ```
-   - Renseignez les variables nécessaires (`DATABASE_URL`, `PINECONE_API_KEY`, `AI_KEY`, etc.).
+#### Option B : Avec Python en local
 
-5. Lancez le serveur FastAPI :
-   ```bash
-   uvicorn app.main:app --reload --port 8000
-   ```
-   L'API est accessible sur **`http://localhost:8000`** et la documentation interactive sur **`http://localhost:8000/api/docs`**.
+```bash
+cd back
+python3 -m venv .venv
+source .venv/bin/activate       # Sur Windows : .venv\Scripts\activate
+
+pip install -r requirements.txt
+cp .env.example .env
+# Remplissez vos clés dans back/.env
+
+uvicorn app.main:app --reload --port 8000
+```
+
+Documentation interactive de l'API : **`http://localhost:8000/api/docs`**  
+Vérification de santé : **`http://localhost:8000/health`**
 
 ---
 
 ### 3. Démarrer le Frontend (`front`)
 
-1. Ouvrez un second terminal dans le dossier `front` :
-   ```bash
-   cd front
-   ```
+Dans un second terminal :
 
-2. Installez les dépendances Node.js :
-   ```bash
-   npm install
-   ```
+```bash
+cd front
+npm install
+cp .env.example .env.local
+# Remplissez vos clés Clerk et l'URL backend dans front/.env.local
 
-3. Configurez vos variables d'environnement :
-   - Copiez `.env.example` vers `.env` :
-     ```bash
-     cp .env.example .env     # Linux/macOS
-     copy .env.example .env   # Windows
-     ```
-   - Vérifiez que `NEXT_PUBLIC_API_URL` pointe bien vers votre backend local :
-     ```env
-     NEXT_PUBLIC_API_URL=http://localhost:8000/api
-     ```
+npm run dev
+```
 
-4. Initialisez Prisma :
-   ```bash
-   npx prisma generate
-   ```
-
-5. Lancez le serveur de développement :
-   ```bash
-   npm run dev
-   ```
-   Le frontend est accessible sur **`http://localhost:3000`**.
+L'application est accessible sur **`http://localhost:3000`**.
 
 ---
 
-## 🌐 Guide de Déploiement Séparé
+## 🔑 Variables d'Environnement
 
-Comme le projet est un **monorepo**, nous déployons le backend et le frontend de façon découplée en ciblant un sous-dossier (`Root Directory`).
+Des fichiers `.env.example` détaillés et commentés sont disponibles :
+- **Vue globale :** [`.env.example`](./.env.example)
+- **Backend :** [`back/.env.example`](./back/.env.example)
+- **Frontend :** [`front/.env.example`](./front/.env.example)
 
-### 🅰️ Déploiement du Backend sur [Render](https://render.com)
+### Résumé des variables indispensables
 
-Vous avez deux méthodes au choix : **Avec Docker (Recommandé)** ou **Avec l'environnement Python natif**.
-
-#### Option 1 : Déploiement avec Docker (Recommandé)
-1. Connectez-vous sur **Render** et cliquez sur **New +** > **Web Service**.
-2. Connectez votre dépôt GitHub.
-3. Configurez les options :
-   - **Name** : `smarttube-api`
-   - **Region** : Francfort (ou proche de votre base de données)
-   - **Root Directory** : `back`
-   - **Language / Runtime** : Sélectionnez **`Docker`**
-   - **Dockerfile Path** : `Dockerfile` *(laisser la valeur par défaut car le Root Directory est `back`)*
-4. Le build et la commande de démarrage sont gérés automatiquement via le `Dockerfile` !
-5. Dans l'onglet **Environment Variables**, ajoutez vos clés secrètes (voir ci-dessous).
-
-#### Option 2 : Déploiement Python natif (sans Docker)
-1. Créez un **Web Service**, sélectionnez votre dépôt.
-2. Configurez :
-   - **Root Directory** : `back`
-   - **Language** : `Python 3`
-   - **Build Command** : `pip install -r requirements.txt`
-   - **Start Command** : `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+| Service | Variable | Localisation | Description |
+| :--- | :--- | :--- | :--- |
+| **PostgreSQL** | `DATABASE_URL` | `back/.env` | URL de connexion (ex: Neon avec `sslmode=require`) |
+| **LLM & IA** | `AI_KEY` | `back/.env` | Clé Google Gemini ou OpenRouter |
+| **Pinecone** | `PINECONE_API_KEY` | `back/.env` | Clé API Pinecone Serverless |
+| **Pinecone** | `PINECONE_INDEX` | `back/.env` | Nom de l'index (défaut : `smarttubes`, dim: 1536) |
+| **Clerk (Back)**| `CLERK_SECRET_KEY` | `back/.env` | Clé secrète Clerk pour valider les tokens |
+| **Clerk (Front)**| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `front/.env.local` | Clé publique Clerk pour l'UI d'authentification |
+| **Clerk (Front)**| `CLERK_SECRET_KEY` | `front/.env.local` | Clé secrète Clerk pour le Server-Side Next.js |
+| **API Client** | `NEXT_PUBLIC_API_URL` | `front/.env.local` | `http://localhost:8000/api` (dev) ou URL Cloud |
 
 ---
 
-#### Variables d'environnement pour Render (Docker ou Python) :
-Ajoutez ces variables dans l'onglet **Environment Variables** :
-- `DATABASE_URL`
-- `AI_KEY`
-- `PINECONE_API_KEY`
-- `PINECONE_INDEX`
-   - `CLERK_SECRET_KEY`
-   - `ENVIRONMENT=production`
-   - `CORS_ORIGINS` : `["https://votre-app.vercel.app"]` *(l'URL Vercel de votre frontend)*
-5. Cliquez sur **Deploy Web Service**.
-6. Une fois déployé, notez l'URL fournie par Render (ex : `https://smarttube-api.onrender.com`).
+## 🌐 Guide de Déploiement Production
 
----
+Le projet utilise l'architecture découplée recommandée : **Backend Dockerisé** sur [Render](https://render.com) (ou Railway) + **Frontend Serverless** sur [Vercel](https://vercel.com).
 
-### 🅱️ Déploiement du Frontend sur [Vercel](https://vercel.com)
+### 1. Déploiement du Backend sur Render (Docker)
+1. Créer un **New Web Service** connecté à votre repo GitHub.
+2. Définir le **Root Directory** sur `back`.
+3. Sélectionner l'environnement **Docker** (il détectera automatiquement le `back/Dockerfile`).
+4. Dans **Environment Variables**, ajouter toutes les variables de `back/.env`.
+5. Renseigner `CORS_ORIGINS=["https://votre-domaine-vercel.app"]`.
+6. Valider : tester l'endpoint `/health` (ex: `https://smarttube-api.onrender.com/health`).
 
-1. Connectez-vous sur **Vercel** et cliquez sur **Add New...** > **Project**.
-2. Importez votre dépôt GitHub.
-3. Dans la section **Configure Project** :
-   - **Root Directory** : Cliquez sur **Edit** et sélectionnez le dossier `front`.
-   - **Framework Preset** : `Next.js` (détecté automatiquement).
-4. Dans la section **Environment Variables**, ajoutez :
-   - `NEXT_PUBLIC_API_URL` : `https://smarttube-api.onrender.com/api` *(l'URL de votre backend Render)*
+### 2. Déploiement du Frontend sur Vercel
+1. Importer le repo sur Vercel.
+2. Définir le **Root Directory** sur `front`.
+3. Configurer les variables d'environnement :
+   - `NEXT_PUBLIC_API_URL=https://smarttube-api.onrender.com/api`
    - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
    - `CLERK_SECRET_KEY`
-   - `DATABASE_URL`
-   - Vos autres clés frontend (AI, Pinecone, Supadata si utilisées côté front).
-5. Cliquez sur **Deploy**.
+4. Déployer.
+
+### 3. Configuration Clerk
+- Dans le tableau de bord Clerk, autoriser le domaine de production Vercel dans **Configure > Domains / Paths**.
 
 ---
 
-## 🔒 Sécurité & Git
+## 🛡️ Sécurité & Bonnes Pratiques
 
-Les fichiers `.env` contenant vos clés secrètes ne doivent **jamais** être poussés sur GitHub. Le fichier `.gitignore` à la racine protège automatiquement vos identifiants. Utilisez toujours `.env.example` pour documenter les variables requises.
+- **Protection des identifiants :** Le fichier `.gitignore` bloque systématiquement les fichiers `.env`, `.env*.local`, ainsi que les médias lourds (> 100 Mo).
+- **Contrôle d'accès :** Toutes les routes privées (`/library`, `/study`, `/api/videos`) sont vérifiées côté serveur via Clerk.
+- **Requêtes vectorielles étanches :** Isolation des données par utilisateur et par vidéo dans Pinecone via des métadonnées dédiées (`userId`, `videoId`).
 
+---
 
-Rate limit exceeded: free-models-per-day. 
-(nvidia/llama-nemotron-embed-vl-1b-v2:free - quota de 50 requêtes/jour atteint sur le tier gratuit)
+## 📄 Licence
 
-limite de 16 requete par jour pour le models
+Ce projet est sous licence MIT. Libre à vous de l'utiliser et de le faire évoluer !
