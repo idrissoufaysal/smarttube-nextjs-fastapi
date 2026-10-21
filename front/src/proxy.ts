@@ -13,7 +13,7 @@ const isProtectedRoute = createRouteMatcher(
   ])
 );
 
-export const proxy = clerkMiddleware(async (auth, req) => {
+const proxyHandler = clerkMiddleware(async (auth, req) => {
   // 1. Routage i18n d'abord : si l'URL ne porte pas encore de préfixe de
   //    locale (/study → /fr/study), on renvoie la redirection telle quelle,
   //    sans vérification d'auth (elle aura lieu sur la requête suivante).
@@ -30,6 +30,9 @@ export const proxy = clerkMiddleware(async (auth, req) => {
 
   return localeResponse;
 });
+
+export const proxy = proxyHandler;
+export default proxyHandler;
 
 export const config = {
   matcher: [
