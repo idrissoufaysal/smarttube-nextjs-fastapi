@@ -3,7 +3,8 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, UIMessage } from 'ai';
 import { useLocale, useTranslations } from 'next-intl';
-import { BrainCircuit,ArrowUp } from 'lucide-react';
+import { useAuth, SignInButton } from '@clerk/nextjs';
+import { BrainCircuit, ArrowUp, Lock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +19,7 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfaceProps) {
   const videoId = url ? extractVideoId(url) : null;
+  const { userId, isSignedIn } = useAuth();
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
@@ -27,7 +29,12 @@ export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfac
       return;
     }
 
-    fetch(`${API_BASE_URL}/chat/history?videoId=${videoId}`)
+    const headers: Record<string, string> = {};
+    if (userId) {
+      headers['x-clerk-user-id'] = userId;
+    }
+
+    fetch(`${API_BASE_URL}/chat/history?videoId=${videoId}`, { headers })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -43,7 +50,7 @@ export function ChatInterface({ transcript, url, onTimelineClick }: ChatInterfac
       })
       .catch(console.error)
       .finally(() => setIsLoadingHistory(false));
-  }, [videoId]);
+  }, [videoId, userId]);
 
   if (isLoadingHistory) {
     return (
@@ -74,6 +81,7 @@ function ChatInterfaceInner({
   onTimelineClick?: (seconds: number) => void,
   initialMessages: UIMessage[]
 }) {
+  const { userId, isSignedIn } = useAuth();
   const t = useTranslations('chat');
   const locale = useLocale();
   const [input, setInput] = useState('');
@@ -133,9 +141,10 @@ function ChatInterfaceInner({
   const { messages, sendMessage, status } = useChat({
     messages: initialMessages,
     transport: new DefaultChatTransport({
-      api: API_BASE_URL+'/chat',
+      api: API_BASE_URL + '/chat',
+      headers: userId ? { 'x-clerk-user-id': userId } : {},
       body: { transcript, videoId, locale },
-    })
+    }),
   });
 
   const isLoading = status === 'submitted';
@@ -268,36 +277,52 @@ function ChatInterfaceInner({
         )}
       </div>
 
-      <div className="px-3 bg-surface-low border-t border-outline-variant/10 mt-auto">
-        <form onSubmit={handleSubmit}>
-          <div className="relative group">
-            <Textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder={t('placeholder')}
-              disabled={isLoading}
-              rows={2}
-              className="w-full bg-surface-container rounded-2xl p-4 pr-12 text-sm text-on-surface placeholder:text-muted-foreground/70 border border-outline-variant/10 focus:border-none resize-none transition-all outline-none min-h-16"
-            />
-            <Button
-              type="submit"
-              disabled={isLoading || !input?.trim() || input.length > 1000}
-              size="icon"
-              className="absolute bottom-3 right-3 w-8 h-8 bg-primary text-on-primary rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg shadow-primary/30 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span className="material-symbols-outlined text-sm font-bold"> <ArrowUp /> </span>
-            </Button>
+      <div className="px-3 py-3 bg-surface-low border-t border-outline-variant/10 mt-auto">
+        {!isSignedIn ? (
+          <div className="flex flex-col items-center justify-center gap-2.5 p-3 rounded-2xl bg-surface-container border border-outline-variant/15 text-center">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Lock className="w-3.5 h-3.5 text-primary" />
+              <span>Connectez-vous pour discuter avec l'assistant IA</span>
+            </div>
+            <SignInButton mode="modal">
+              <Button size="sm" className="rounded-full px-5 h-8 text-xs font-semibold bg-primary hover:bg-primary/90 text-on-primary shadow-sm shadow-primary/20">
+                Se connecter
+              </Button>
+            </SignInButton>
           </div>
-          <div className="mt-3 flex items-center justify-between">
-          {input.length >200 &&  <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-medium transition-colors ${input.length > 900 ? 'text-amber-500 font-bold' : 'text-muted-foreground'}`}>
-                {input.length} / 1000
-              </span>
-            </div>}
-            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{t('pressEnter')}</span>
-          </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="relative group">
+              <Textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={t('placeholder')}
+                disabled={isLoading}
+                rows={2}
+                className="w-full bg-surface-container rounded-2xl p-4 pr-12 text-sm text-on-surface placeholder:text-muted-foreground/70 border border-outline-variant/10 focus:border-none resize-none transition-all outline-none min-h-16"
+              />
+              <Button
+                type="submit"
+                disabled={isLoading || !input?.trim() || input.length > 1000}
+                size="icon"
+                className="absolute bottom-3 right-3 w-8 h-8 bg-primary text-on-primary rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg shadow-primary/30 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="material-symbols-outlined text-sm font-bold"> <ArrowUp /> </span>
+              </Button>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              {input.length > 200 && (
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-medium transition-colors ${input.length > 900 ? 'text-amber-500 font-bold' : 'text-muted-foreground'}`}>
+                    {input.length} / 1000
+                  </span>
+                </div>
+              )}
+              <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{t('pressEnter')}</span>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

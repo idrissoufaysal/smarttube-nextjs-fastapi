@@ -24,6 +24,15 @@ class Settings(BaseSettings):
     #OPENROUTER_MODEL: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
     OPENROUTER_MODEL: str = "google/gemini-2.5-flash"
 
+    # Token limits & Guardrails (Économie & Prévention des abus)
+    MAX_TOKENS_CHAT: int = 600
+    MAX_TOKENS_NOTES: int = 1500
+    MAX_TOKENS_QUIZ: int = 2000
+    MAX_CHAT_HISTORY_MESSAGES: int = 6
+    RATE_LIMIT_CHAT: str = "10/minute"
+    RATE_LIMIT_QUIZ: str = "5/minute"
+    RATE_LIMIT_NOTES: str = "3/minute"
+
     # Embeddings (OpenRouter / OpenAI — texte-embedding-3-small, 1536 dims max)
     EMBEDDING_MODEL: str = "openai/text-embedding-3-small"
     EMBEDDING_DIMENSIONS: int = 1536  # max du modèle 3-small (Matryoshka : 1536/512/256)

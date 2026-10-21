@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user, get_current_user_optional
+from app.config.settings import settings
+from app.core.limiter import limiter
 from app.db.models import Segment, User, Video
 from app.db.session import get_db
 from app.schemas.video import (
@@ -193,9 +195,11 @@ async def get_video_info(
 
 
 @router.post("/video/notes")
+@limiter.limit(settings.RATE_LIMIT_NOTES)
 async def get_or_create_notes(
+    request: Request,
     body: NotesRequest,
-    current_user: User | None = Depends(get_current_user_optional),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     # 1. Vérifier le cache si pas de régénération demandée
@@ -213,7 +217,7 @@ async def get_or_create_notes(
         )
 
     # 2. Streaming de la réponse en direct
-    user_id = current_user.id if current_user else None
+    user_id = current_user.id
     return StreamingResponse(
         generate_notes_stream(body.videoId, body.transcript, db, user_id=user_id),
         media_type="text/plain",

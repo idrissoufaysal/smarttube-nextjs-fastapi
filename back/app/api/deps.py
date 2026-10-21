@@ -44,9 +44,7 @@ async def get_current_user_optional(
             clerk_id = None
 
     if not clerk_id:
-        # Fallback pour le dev local si aucun auth header n'est présent
-        result = await db.execute(select(User).limit(1))
-        return result.scalars().first()
+        return None
 
     # 3. Recherche de l'utilisateur dans PostgreSQL
     query = select(User).where(User.clerkId == clerk_id)

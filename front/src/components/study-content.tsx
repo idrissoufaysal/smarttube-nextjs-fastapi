@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCompletion } from '@ai-sdk/react';
 import type { MediaPlayerInstance } from '@vidstack/react';
+import { useAuth } from '@clerk/nextjs';
 import { UrlModal } from '@/components/url-modal';
 import { StudyLeftPanel } from './study/study-left-panel';
 import { StudyRightPanel } from './study/study-right-panel';
@@ -57,13 +58,19 @@ export function StudyContent() {
   const playerRef = useRef<MediaPlayerInstance | null>(null);
   const activeSegmentRef = useRef<HTMLDivElement | null>(null);
 
+  const { userId, isSignedIn } = useAuth();
+
   // Hook Vercel AI SDK pour streamer les notes
   const { completion, complete, isLoading: isGenerating, setCompletion } = useCompletion({
     api: `${API_BASE_URL}/video/notes`,
+    headers: userId ? { 'x-clerk-user-id': userId } : {},
     body: {
       videoId,
       transcript,
       locale,
+    },
+    onError: (err) => {
+      toast.error(err.message || "Erreur lors de la génération des notes");
     },
     onFinish: (_, resultText) => {
       setNotes(resultText);
@@ -181,7 +188,10 @@ export function StudyContent() {
       if (!forceRegenerate) {
         const checkRes = await fetch(`${API_BASE_URL}/video/notes`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(userId ? { 'x-clerk-user-id': userId } : {}),
+          },
           body: JSON.stringify({ videoId, transcript, regenerate: false }),
         });
 
@@ -200,10 +210,18 @@ export function StudyContent() {
         }
       }
 
+      // Si pas de cache ou régénération : vérification de l'authentification
+      if (!isSignedIn) {
+        setIsCheckingNotes(false);
+        toast.error("Veuillez vous connecter pour générer des notes avec l'IA.");
+        return;
+      }
+
       // 2. Pas de cache (ou forceRegenerate) → générer via stream SSE avec useCompletion
       // isGenerating (useCompletion) prend le relais dès que complete() démarre
       setIsCheckingNotes(false);
       await complete('', {
+        headers: userId ? { 'x-clerk-user-id': userId } : {},
         body: {
           videoId,
           transcript,

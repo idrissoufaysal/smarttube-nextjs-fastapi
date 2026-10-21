@@ -3,6 +3,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config.settings import settings
 from app.db.models import Video
 from app.services.langfuse_client import get_langfuse_callback, langfuse_trace_context
 from app.services.rag import get_llm
@@ -34,7 +35,7 @@ Consignes impératives pour les notes :
         HumanMessage(content=f"Voici la transcription de la vidéo :\n\n{transcript}"),
     ]
 
-    llm = get_llm(streaming=True)
+    llm = get_llm(streaming=True, max_tokens=settings.MAX_TOKENS_NOTES)
     accumulated_notes: list[str] = []
 
     # Contexte et callback Langfuse pour tracer la génération de notes

@@ -3,6 +3,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config.settings import settings
 from app.db.models import Quiz, QuizQuestion
 from app.schemas.quiz import QuizGenerationSchema, QuizQuestionSchema, QuizResponseData
 from app.services.langfuse_client import get_langfuse_callback, langfuse_trace_context
@@ -53,7 +54,7 @@ async def generate_quiz_service(
                 )
 
     # 2. Génération via LLM avec Structured Output
-    llm = get_llm(streaming=False)
+    llm = get_llm(streaming=False, max_tokens=settings.MAX_TOKENS_QUIZ)
     parser = PydanticOutputParser(pydantic_object=QuizGenerationSchema)
 
     system_prompt = f"""Tu es un professeur expert. Génère un QCM (Quiz) à choix multiples basé EXCLUSIVEMENT sur la transcription vidéo suivante :

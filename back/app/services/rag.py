@@ -14,10 +14,11 @@ from app.services.langfuse_client import (
 from app.services.vectorstore import similarity_search_rag
 
 
-def get_llm(streaming: bool = True) -> ChatOpenAI:
+def get_llm(streaming: bool = True, max_tokens: int | None = None) -> ChatOpenAI:
     """
-    Initialise le modèle de chat (OpenRouter ou OpenAI).
+    Initialise le modèle de chat (OpenRouter ou OpenAI) avec limitation stricte de tokens.
     """
+    limit = max_tokens or settings.MAX_TOKENS_CHAT
     if settings.AI_KEY:
         return ChatOpenAI(
             model=settings.OPENROUTER_MODEL,
@@ -25,6 +26,7 @@ def get_llm(streaming: bool = True) -> ChatOpenAI:
             base_url="https://openrouter.ai/api/v1",
             streaming=streaming,
             temperature=0.3,
+            max_tokens=limit,
             default_headers={
                 "HTTP-Referer": "https://smarttube.example.com",
                 "X-Title": "SmartTube AI",
@@ -35,6 +37,7 @@ def get_llm(streaming: bool = True) -> ChatOpenAI:
         api_key=settings.OPENAI_API_KEY,
         streaming=streaming,
         temperature=0.3,
+        max_tokens=limit,
     )
 
 
@@ -131,9 +134,16 @@ Instructions impératives pour tes réponses :
             else "Tu es un assistant vidéo pédagogique et intelligent appelé SmartTube. Tes réponses doivent IMPÉRATIVEMENT être en français."
         )
 
+        # Guardrail P1 : Tronquer l'historique aux N derniers messages pour limiter les tokens d'entrée
+        history_window = (
+            messages[-settings.MAX_CHAT_HISTORY_MESSAGES:]
+            if len(messages) > settings.MAX_CHAT_HISTORY_MESSAGES
+            else messages
+        )
+
         # Conversion des messages en format LangChain
         langchain_messages = [SystemMessage(content=system_content)]
-        for m in messages:
+        for m in history_window:
             role = m.get("role")
             content = ""
             if "parts" in m and isinstance(m["parts"], list):
@@ -162,7 +172,7 @@ Instructions impératives pour tes réponses :
             except Exception as e:
                 print(f"[Chat DB] Erreur sauvegarde message user: {e}")
 
-        llm = get_llm(streaming=True)
+        llm = get_llm(streaming=True, max_tokens=settings.MAX_TOKENS_CHAT)
         accumulated_response: list[str] = []
         msg_id = f"msg-{uuid.uuid4().hex[:16]}"
 

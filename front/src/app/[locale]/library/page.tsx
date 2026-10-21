@@ -51,6 +51,7 @@ async function getLibraryVideos(): Promise<VideoCard[] | null> {
     }
     
     const videos = await res.json();
+    console.log('VIDEOS IN LIBRARY:', videos);
     
 
     return videos.map((v: {

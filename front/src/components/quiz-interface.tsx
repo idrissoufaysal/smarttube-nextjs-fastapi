@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth, SignInButton } from '@clerk/nextjs';
 import {
   BrainCircuit,
   CheckCircle2,
@@ -98,6 +99,7 @@ const OPTION_KEYS = ['A', 'B', 'C', 'D', 'E'];
    Main Component
    ═══════════════════════════════════════════ */
 export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
+  const { userId, isSignedIn } = useAuth();
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('moyen');
   const [selectedQuestionsCount, setSelectedQuestionsCount] = useState<5 | 10 | 15>(5);
   const [quizState, setQuizState] = useState<'setup' | 'generating' | 'active' | 'finished'>('setup');
@@ -113,13 +115,16 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
 
   useEffect(() => {
     if (videoId) fetchAttempts();
-  }, [videoId]);
+  }, [videoId, userId]);
 
   const fetchAttempts = async () => {
     if (!videoId) return;
     setLoadingAttempts(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/quiz/attempt?videoId=${videoId}`);
+      const headers: Record<string, string> = {};
+      if (userId) headers['x-clerk-user-id'] = userId;
+
+      const res = await fetch(`${API_BASE_URL}/quiz/attempt?videoId=${videoId}`, { headers });
       if (res.ok) {
         const d = await res.json();
         setAttempts(d.attempts || []);
@@ -132,6 +137,12 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
   };
 
   const startQuizGeneration = async () => {
+    if (!isSignedIn) {
+      setError("Veuillez vous connecter pour générer un quiz avec l'IA.");
+      setQuizState('setup');
+      return;
+    }
+
     setQuizState('generating');
     setError(null);
     setQuestions([]);
@@ -142,7 +153,10 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
     try {
       const res = await fetch(`${API_BASE_URL}/video/quiz`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(userId ? { 'x-clerk-user-id': userId } : {}),
+        },
         body: JSON.stringify({
           transcript,
           difficulty: selectedDifficulty,
@@ -150,7 +164,10 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
           videoId,
         }),
       });
-      if (!res.ok) throw new Error('Erreur lors de la génération du quiz');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || 'Erreur lors de la génération du quiz');
+      }
       const data = await res.json();
       if (data.quiz?.questions) {
         setQuestions(data.quiz.questions);
@@ -191,7 +208,10 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
         selectedAnswer === questions[currentQuestionIndex].correctAnswerIndex ? score + 1 : score;
       await fetch(`${API_BASE_URL}/quiz/attempt`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(userId ? { 'x-clerk-user-id': userId } : {}),
+        },
         body: JSON.stringify({
           videoId,
           quizId,
@@ -332,15 +352,26 @@ export function QuizInterface({ transcript, videoId }: QuizInterfaceProps) {
           </div>
 
           {/* CTA Button */}
-          <Button
-            type="button"
-            onClick={startQuizGeneration}
-            disabled={!transcript}
-            className="w-full h-11 bg-primary hover:bg-primary/90 text-on-primary font-bold rounded-xl text-sm gap-2.5 shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <BrainCircuit className="w-4 h-4" />
-            Lancer le Quiz ({selectedQuestionsCount} questions)
-          </Button>
+          {!isSignedIn ? (
+            <div className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-xl bg-surface-container border border-outline-variant/15 text-center">
+              <span className="text-xs text-muted-foreground">Connectez-vous pour lancer un quiz généré par l'IA</span>
+              <SignInButton mode="modal">
+                <Button type="button" size="sm" className="rounded-full px-5 h-8 text-xs font-semibold bg-primary hover:bg-primary/90 text-on-primary">
+                  Se connecter pour jouer
+                </Button>
+              </SignInButton>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              onClick={startQuizGeneration}
+              disabled={!transcript}
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-on-primary font-bold rounded-xl text-sm gap-2.5 shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <BrainCircuit className="w-4 h-4" />
+              Lancer le Quiz ({selectedQuestionsCount} questions)
+            </Button>
+          )}
         </div>
 
         {/* Historique Section */}

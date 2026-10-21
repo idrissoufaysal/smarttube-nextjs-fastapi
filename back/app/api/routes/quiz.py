@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user_optional
+from app.api.deps import get_current_user, get_current_user_optional
+from app.config.settings import settings
+from app.core.limiter import limiter
 from app.db.models import QuizAttempt, User
 from app.db.session import get_db
 from app.schemas.quiz import (
@@ -18,13 +20,15 @@ router = APIRouter(tags=["Quiz"])
 
 
 @router.post("/video/quiz", response_model=QuizResponse)
+@limiter.limit(settings.RATE_LIMIT_QUIZ)
 async def create_or_get_quiz(
+    request: Request,
     body: QuizRequest,
-    current_user: User | None = Depends(get_current_user_optional),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     count = int(body.numberOfQuestions) if str(body.numberOfQuestions).isdigit() else 5
-    user_id = current_user.id if current_user else None
+    user_id = current_user.id
 
     quiz_data = await generate_quiz_service(
         video_id=body.videoId,

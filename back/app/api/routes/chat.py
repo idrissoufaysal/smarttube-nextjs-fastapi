@@ -1,11 +1,13 @@
 import json
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_current_user_optional
+from app.config.settings import settings
+from app.core.limiter import limiter
 from app.db.models import ChatMessage, User
 from app.db.session import get_db
 from app.schemas.chat import ChatMessageResponse, ChatRequest
@@ -18,9 +20,11 @@ MAX_USER_QUERY_CHARS = 1000
 
 
 @router.post("/chat")
+@limiter.limit(settings.RATE_LIMIT_CHAT)
 async def chat_rag_endpoint(
+    request: Request,
     body: ChatRequest,
-    current_user: User | None = Depends(get_current_user_optional),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     # Extraire la dernière requête de l'utilisateur pour vérifier les guardrails

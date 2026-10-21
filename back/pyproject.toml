@@ -22,4 +22,5 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.52",
     "uvicorn[standard]>=0.52.4",
     "youtube-transcript-api>=1.2.4",
+    "slowapi>=0.1.10",
 ]
