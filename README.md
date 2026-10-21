@@ -13,8 +13,23 @@
 **Transformez n'importe quelle vidéo YouTube en espace d'apprentissage interactif.**  
 Notes synthétiques intelligentes, quiz interactifs de révision et chat IA sémantique avec navigation par horodatage.
 
-[Fonctionnalités](#-fonctionnalités) • [Architecture](#-architecture) • [Démarrage Rapide](#-démarrage-rapide) • [Variables d'Environnement](#-variables-denvironnement) • [Déploiement](#-guide-de-déploiement-production)
+[Démonstration](#-démonstration-vidéo) • [Fonctionnalités](#-fonctionnalités) • [Architecture](#-architecture) • [Démarrage Rapide](#-démarrage-rapide) • [Variables d'Environnement](#-variables-denvironnement) • [Déploiement](#-guide-de-déploiement-production)
 
+</div>
+
+---
+
+## 🎥 Démonstration Vidéo
+
+<div align="center">
+  <video src="front/public/smarttube.mp4" width="100%" poster="front/public/img.png" controls autoplay loop muted playsinline style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+    <a href="front/public/smarttube.mp4">
+      <img src="front/public/img.png" alt="SmartTube Démonstration Vidéo" width="100%" style="border-radius: 12px;" />
+    </a>
+  </video>
+  <p align="center">
+    <sub><em>▶️ Aperçu vidéo de l'expérience utilisateur SmartTube (lecteur interactif, notes générées, quiz et chat RAG).</em></sub>
+  </p>
 </div>
 
 ---
