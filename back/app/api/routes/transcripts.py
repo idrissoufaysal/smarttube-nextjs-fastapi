@@ -37,8 +37,15 @@ async def get_or_create_transcript(
     result = await db.execute(query)
     cached_video = result.scalars().first()
 
-    # Vérification de la limite de 4 vidéos par utilisateur
     user_id = current_user.id if current_user else None
+
+    # Si la vidéo est en cache mais n'a pas encore de propriétaire, on l'associe à l'utilisateur
+    if cached_video and user_id and cached_video.userId is None:
+        cached_video.userId = user_id
+        await db.commit()
+        await db.refresh(cached_video)
+
+    # Vérification de la limite de vidéos par utilisateur
     if user_id and not (cached_video and cached_video.userId == user_id):
         count_query = select(func.count(Video.id)).where(Video.userId == user_id)
         count_res = await db.execute(count_query)

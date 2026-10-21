@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { Zap, X, Link, ArrowRight } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-config';
@@ -14,6 +15,7 @@ interface AddVideoModalProps {
 }
 
 export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
+  const { userId } = useAuth();
   const t = useTranslations('modals.addVideo');
   const te = useTranslations('errors');
   const router = useRouter();
@@ -36,7 +38,10 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
     try {
       const res = await fetch(`${API_BASE_URL}/transcript`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(userId ? { "x-clerk-user-id": userId } : {}),
+        },
         body: JSON.stringify({ url: inputUrl }),
       });
 

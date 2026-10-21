@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { API_BASE_URL } from '@/lib/api-config';
 import { readApiError } from '@/lib/api-errors';
 
@@ -11,6 +12,7 @@ interface UrlModalProps {
 }
 
 export function UrlModal({ onSuccess }: UrlModalProps) {
+  const { userId } = useAuth();
   const t = useTranslations('modals.urlModal');
   const te = useTranslations('errors');
   const router = useRouter();
@@ -33,7 +35,10 @@ export function UrlModal({ onSuccess }: UrlModalProps) {
     try {
       const res = await fetch(`${API_BASE_URL}/transcript`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(userId ? { "x-clerk-user-id": userId } : {}),
+        },
         body: JSON.stringify({ url: inputUrl }),
       });
 
