@@ -105,18 +105,41 @@ cd smarttube-nextjs-fastapi
 
 ### 2. Démarrer le Backend (`back`)
 
-#### Option A : Avec Docker (Recommandé - En 1 commande)
+> [!TIP]
+> **🐳 Utilisation de Docker pour le Backend (Recommandé)** :  
+> Vous **n'avez pas besoin d'installer Python 3.12** ni de configurer d'environnement virtuel (`venv`) sur votre machine !  
+> Le dossier `back/` contient déjà un `Dockerfile` et un `docker-compose.yml` préconfigurés. Tout s'exécute dans un conteneur isolé avec toutes les dépendances compilées.
 
-```bash
-cd back
-cp .env.example .env
-# Remplissez vos clés dans back/.env
+#### Option A : Avec Docker (Le plus simple & sans installer Python)
 
-docker compose up -d
-```
-Le backend est immédiatement accessible sur `http://localhost:8000`.
+1. Rendez-vous dans le dossier `back` et configurez votre `.env` :
+   ```bash
+   cd back
+   cp .env.example .env
+   # Renseignez vos clés dans back/.env
+   ```
 
-#### Option B : Avec Python en local
+2. Lancez le backend avec Docker Compose :
+   ```bash
+   docker compose up -d
+   ```
+   *L'API est immédiatement accessible sur `http://localhost:8000`.*
+
+3. **Commandes Docker utiles pour le backend :**
+   ```bash
+   # Consulter les logs en temps réel
+   docker compose logs -f
+
+   # Reconstruire l'image après une modification de code
+   docker compose up --build -d
+
+   # Arrêter le backend
+   docker compose down
+   ```
+
+#### Option B : Avec Python en local (sans Docker)
+
+Si vous préférez exécuter Python directement sur votre machine hôte :
 
 ```bash
 cd back
